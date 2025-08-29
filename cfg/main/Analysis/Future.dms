@@ -2,16 +2,76 @@ container Future : using = "units;geography;sourcedata/regionalunits;classificat
 {
 	attribute<ClaimRegion>           Region_rel (CompactedDomain) := ClaimRegion/per_CompactedDomain;
 	
-	container InitialState 
+	container InitialState:= InitialState_T(ModelParameters/StartYear);
+
+	unit<uint32> ClaimRegion := FunctionalAreas;
+
+	container Claim
 	{
+		container Builtup    := Preprocessing/Claims_BuiltUp;
+		container Population := Preprocessing/Claims_Population;
+	}
+	container Suitability := for_each_ne(ProjectionYears/name, 'Templates/Suitability_T_GLM('
+		+quote(ProjectionYears/name)+
+		','+quote(ProjectionYears/prev_name)+ 
+		', Allocate_Builtup/'+ProjectionYears/prevStateName+
+		', Allocate_Population/'+ProjectionYears/prevStateName+
+		', Future/Calculate_GridDistances'+')'	
+	);
+	container Allocate_Builtup := 
+		for_each_ne(
+			ProjectionYears/name 
+			,	'Allocate_Builtup_T('
+					+quote(ProjectionYears/name)+                              // (0) Year
+					','+quote(ProjectionYears/prev_name)+                      // (1) PrevYear
+					', Allocate_Builtup/'+ProjectionYears/prevStateName+       // (2) State builtup of previous period
+					', Suitability/'+ProjectionYears/name+    				   // (3) Suitability container
+					', Claim/Builtup/'+ProjectionYears/name+                   // (4) Expected amount of builtup per region in km2
+				')'
+		) 
+	{
+		container InitialState:= Future/InitialState;
+	}
+		
+	container Allocate_Population := 
+		for_each_ne(
+			ProjectionYears/name 
+			,	'Allocate_Population_T('
+					+quote(ProjectionYears/name)+
+					','+quote(ProjectionYears/prev_name)+
+					','+ProjectionYears/prevStateName+
+					', Allocate_Builtup/'+ProjectionYears/name+'/CurrState'
+					', Allocate_Builtup/'+ProjectionYears/name+'/NewState'
+					', Suitability/'+ProjectionYears/name+    				  
+					', Claim/Population/'+ProjectionYears/name+
+				')'
+		) 
+	{
+		container InitialState:= Future/InitialState;
+	}
+	container Calculate_GridDistances := 
+		for_each_ne(
+			ProjectionYears/name
+			, Use_TempTifFiles 
+				? 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ProjectionYears/name+'/ReadTypologyK)' 
+				: 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ProjectionYears/name+'/Typology_Domain)'
+		)
+	{
+		container Y2020 := /Preprocessing/GridDistances/Y2020;
+	}
+	#include<Results_Storage.dms>
+	#include<Indicators.dms>
+	
+	Template InitialState_T {
+		parameter<string> StartYear:= ModelParameters/StartYear;
 		container Impl
 		{
-			attribute<BuiltUpKm2>        BuiltUp_Total_Area_domain               (domain) := ='SourceData/BuiltUp/Total/'+ModelParameters/StartYear+'[km2] / 1[km2] * 1[BuiltUpKm2]';
-			attribute<BuiltUpKm2>        BuiltUp_Residential_Area_domain         (domain) := ='SourceData/BuiltUp/Residential/'+ModelParameters/StartYear+'[km2] / 1[km2] * 1[BuiltUpKm2]';
-			attribute<BuiltUpKm2>        BuiltUp_NonResidential_Area_domain      (domain) := ='SourceData/BuiltUp/NonResidential/'+ModelParameters/StartYear+'[km2] / 1[km2] * 1[BuiltUpKm2]';
+			attribute<BuiltUpKm2>        BuiltUp_Total_Area_domain               (domain) := ='SourceData/BuiltUp/Total/'+StartYear+'[km2] / 1[km2] * 1[BuiltUpKm2]';
+			attribute<BuiltUpKm2>        BuiltUp_Residential_Area_domain         (domain) := ='SourceData/BuiltUp/Residential/'+StartYear+'[km2] / 1[km2] * 1[BuiltUpKm2]';
+			attribute<BuiltUpKm2>        BuiltUp_NonResidential_Area_domain      (domain) := ='SourceData/BuiltUp/NonResidential/'+StartYear+'[km2] / 1[km2] * 1[BuiltUpKm2]';
 			attribute<float32>           BuiltUp_Total_Share_domain              (domain) := BuiltUp_Total_Area_domain / domain/area * 1[km2] / 1[BuiltUpKm2];
 			attribute<float32>           BuiltUp_Residential_Share_domain        (domain) := BuiltUp_Residential_Area_domain / domain/area * 1[km2] / 1[BuiltUpKm2];
-			attribute<NrPerson>          Population_domain                       (domain) := ='SourceData/Population/PerYear/'+ModelParameters/StartYear+'/Read_Population';
+			attribute<NrPerson>          Population_domain                       (domain) := ='SourceData/Population/PerYear/'+StartYear+'/Read_Population';
 			attribute<NrPerson>          Population                     (CompactedDomain) := Population_domain[CompactedDomain/org_rel]; 
 			
 			attribute<Person_BuiltUpKm2> Population_inRes_Density_domain         (domain) := Population_domain[Person] / BuiltUp_Residential_Area_domain; // DO NOT USE!
@@ -39,57 +99,6 @@ container Future : using = "units;geography;sourcedata/regionalunits;classificat
 		
 		container PopulationDensity_8dir  := Preprocessing/Population_Neighbourhoods/Create_8dir_T((impl/Population_domain[Person] / domain/area)[float64]);
 	}
-
-	unit<uint32> ClaimRegion := FunctionalAreas;
-
-	container Claim
-	{
-		container Builtup    := Preprocessing/Claims_BuiltUp;
-		container Population := Preprocessing/Claims_Population;
-	}
-
-	container Allocate_Builtup := 
-		for_each_ne(
-			ProjectionYears/name 
-			,	'Allocate_Builtup_T('
-					+quote(ProjectionYears/name)+                              // (0) Year
-					','+quote(ProjectionYears/prev_name)+                      // (1) PrevYear
-					', Allocate_Builtup/'+ProjectionYears/prevStateName+       // (2) State builtup of previous period
-					', Allocate_Population/'+ProjectionYears/prevStateName+    // (3) State population of previous period (population_allocation container)
-					', Claim/Builtup/'+ProjectionYears/name+                   // (4) Expected amount of builtup per region in km2
-				')'
-		) 
-	{
-		container InitialState:= Future/InitialState;
-	}
-		
-	container Allocate_Population := 
-		for_each_ne(
-			ProjectionYears/name 
-			,	'Allocate_Population_T('
-					+quote(ProjectionYears/name)+
-					','+quote(ProjectionYears/prev_name)+
-					','+ProjectionYears/prevStateName+
-					', Allocate_Builtup/'+ProjectionYears/name+'/CurrState'
-					', Allocate_Builtup/'+ProjectionYears/name+'/NewState'
-					', Claim/Population/'+ProjectionYears/name+
-				')'
-		) 
-	{
-		container InitialState:= Future/InitialState;
-	}
-	container Calculate_GridDistances := 
-		for_each_ne(
-			ProjectionYears/name
-			, Use_TempTifFiles 
-				? 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ProjectionYears/name+'/ReadTypologyK)' 
-				: 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ProjectionYears/name+'/Typology_Domain)'
-		)
-	{
-		container Y2020 := /Preprocessing/GridDistances/Y2020;
-	}
-	#include<Results_Storage.dms>
-	#include<Indicators.dms>
 	#include<Allocate_Builtup_T.dms>
 	#include<Allocate_Population_T.dms>
 }

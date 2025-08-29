@@ -20,6 +20,7 @@ container Preprocessing : using = "Geography;Units;SourceData;SourceData/Regiona
 			, Person
 		)
 	{
+		attribute<Person> Y2000 (FunctionalAreas) := sum(SourceData/Population/PerYear/Y2000/Read_Population[Person], FunctionalAreas/per_domain);
 		attribute<Person> Y2010 (FunctionalAreas) := sum(SourceData/Population/PerYear/Y2010/Read_Population[Person], FunctionalAreas/per_domain);
 		attribute<Person> Y2020 (FunctionalAreas) := sum(SourceData/Population/PerYear/Y2020/Read_Population[Person], FunctionalAreas/per_domain);
 		attribute<Person> Y2010_fromClaims (FunctionalAreas) := (SourceData/Claims/Read_CSV/Pop_estimates/POP2010[Person])[invert(SourceData/Claims/Read_CSV/Pop_estimates/FunctionalArea_rel)];
@@ -42,6 +43,8 @@ container Preprocessing : using = "Geography;Units;SourceData;SourceData/Regiona
 			, float32
 		)
 	{
+		attribute<float32> Y2010 (FunctionalAreas) := (Claims_Population/y2010 - Claims_Population/y2000) / Claims_Population/y2000;
+		attribute<float32> Y2020 (FunctionalAreas) := (Claims_Population/y2020 - Claims_Population/y2010) / Claims_Population/y2010;
 		attribute<float32> Y2030 (FunctionalAreas) := (Claims_Population/y2030 - Claims_Population/y2020) / Claims_Population/y2020;
 	}
 	

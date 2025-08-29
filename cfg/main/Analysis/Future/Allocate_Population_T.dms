@@ -5,6 +5,7 @@ Template Allocate_Population_T
 	container          OldState_Pop; //fka CurrState
 	container          OldState_BuiltUp;
 	container          NewState_BuiltUp;
+	container		   Suitability;
 	attribute<Person>  Claim (ClaimRegion);
 	///
 	// attribute<float32> Initial_Population_Proportional_Reduction_Rate (ClaimRegion) := ='Preprocessing/PercDelta_Claims_Population/'+ThisYear+' < 0f 
@@ -49,35 +50,11 @@ Template Allocate_Population_T
 		attribute<Person>            Population                         (ClaimRegion) := Claim;
 	}
 	
-	container Suitability
+	container Disaggregation_Proxy
 	{
-		container AutoGLM_Coeffs  := Analysis/Calibration/ReadCoffecients/coef2domain/domain;
-		attribute<Suit> Calc (domain) := ='(OldState_Pop/PopulationDensity_8dir/Ln_mean_8dir[float32]                                                                         * AutoGLM_Coeffs/ln_PopulationDensity_2000_8dir) + '
-																'(min_elem(Physical/Coast/Location2Coast_m_sqr/Result[float32],250f)                                          * AutoGLM_Coeffs/Distance2Coastline) + 
-																(min_elem(Physical/Water/Location2LargeInlandWater_m_sqr/Result[float32],250f)                                * AutoGLM_Coeffs/Distance2LargeInlandWater) + 
-																(min_elem(makedefined(Socioeconomic/Infrastructure/Location2Roads45_m_sqr/Result[float32],1000f),250f)        * AutoGLM_Coeffs/Distance2SecundaryRoads) + 
-																(Calculate_GridDistances/'+PrevYear+'/Grid_costs_atleast_to/villages      		                              * AutoGLM_Coeffs/gc_villages) + 
-																(Calculate_GridDistances/'+PrevYear+'/Grid_costs_atleast_to/cities                                      	  * AutoGLM_Coeffs/gc_cities) + 
-																(Physical/Elevation/Mean_1k[float32]                                                                          * AutoGLM_Coeffs/Elevation) + 
-																(Physical/Slope_2021/ReadData[float32]                                                                        * AutoGLM_Coeffs/Slope) + 
-																(makedefined(Physical/TerrainRoughnessIndex/TRI_mean_30ss_World[float32], 0f)                                 * AutoGLM_Coeffs/TRI_mean) + 
-																(Policy/ProtectedAreas/ReadData[float32]                                                                      * AutoGLM_Coeffs/IsProtectedArea) + 
-																(Physical/Water/FloodProneArea/RP100/ReadData_Defined[float32]                                                * AutoGLM_Coeffs/IsFloodProneArea_RP100) + 
-																(Physical/Natural_Hazards/Earthquake/Earthquakes_Modified_Mercalli_Intensity/ReadData[float32]                * AutoGLM_Coeffs/Earthquakes_MMI_Index) + 
-																(Physical/Natural_Hazards/Landslide/LS_risk[float32]                                                          * AutoGLM_Coeffs/Landslide_Prone) + 
-																AutoGLM_Coeffs/Intercept';
-																
-		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_'+ModelParameters/Calibration_filedate+'_Pop_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
-		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_'+ModelParameters/Calibration_filedate+'_Pop_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
-				
-		attribute<Suit>              BuiltUp                        (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'Read_Calc[CompactedDomain/org_rel]' : 'Write_Calc[CompactedDomain/org_rel]';
-		attribute<Suit>              CappedBuiltUp                  (CompactedDomain) := min_elem(BuiltUp, 80[suit]), Descr = "";
-		attribute<Suit>              expCappedBuiltUp               (CompactedDomain) := exp(CappedBuiltUp),  Descr = "";
-		attribute<float32>           Prob                           (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp), Descr = "Probability of built up at that location";
-	
-		attribute<Suit>              NonNegative                    (CompactedDomain) := BuiltUp > 0f ? BuiltUp + 1f : exp(BuiltUp), Descr = "Make the probability non-negatiev";
+		attribute<Suit>              NonNegative                    (CompactedDomain) := Suitability/BuiltUp > 0f ? Suitability/BuiltUp + 1f : exp(Suitability/BuiltUp), Descr = "Make the probability non-negatiev";
 		attribute<Suit>              Population                     (CompactedDomain) := NonNegative, Descr = "Interpret the built-up probability as the suitability for population allocation";
-		attribute<Suit>              Scaled_Reduction               (CompactedDomain) := (1f - ModelParameters/Pop_Suitability_Reduction_Scale) + (ModelParameters/Pop_Suitability_Reduction_Scale * min_elem(max_elem(1[Suit] - Prob, 0[Suit]), 1[Suit]))
+		attribute<Suit>              Scaled_Reduction               (CompactedDomain) := (1f - ModelParameters/Pop_Suitability_Reduction_Scale) + (ModelParameters/Pop_Suitability_Reduction_Scale * min_elem(max_elem(1[Suit] - Suitability/Prob, 0[Suit]), 1[Suit]))
 																							, Descr = "Use the inverse suitability as a proxy to choose locations for population reduction scale with proportional reduction";
 	}
 	
@@ -95,7 +72,7 @@ Template Allocate_Population_T
 		
 		// Reduction scaled attempt: cells will lose 
 		attribute<float32>           Regional_Population_to_draw                (ClaimRegion) := Population_in_Region[float32] * Initial_Population_Scaled_Reduction_Rate, Descr = "How many people need to drawn from the region. To accomodate regional decline (if present) and internal migration.";
-		attribute<float32>           Scaled_Reducible_pop                   (CompactedDomain) := OldState_Pop/Population[float32] * Suitability/Scaled_Reduction[float32], Descr = "Initial population times the inverse suitability proxy to get the potential population taken out per cell.";
+		attribute<float32>           Scaled_Reducible_pop                   (CompactedDomain) := OldState_Pop/Population[float32] * Disaggregation_Proxy/Scaled_Reduction[float32], Descr = "Initial population times the inverse suitability proxy to get the potential population taken out per cell.";
 		attribute<float32>           Scaled_Reduction                       (CompactedDomain) := min_elem(scalesum(Scaled_Reducible_pop, Region_rel, Regional_Population_to_draw), OldState_Pop/Population[float32]), Descr = "Disaggregate the to-be-drawn population according to the inverse suitability proxy weigthed by the initial population. Canntot take out more than the present population though.";
 		attribute<float32>			 Regional_Scaled_Reduction					(ClaimRegion) := sum(Scaled_Reduction, Region_rel), Descr = "Sum how many people are drawn from the existing population in the functional area";
 		attribute<float32> 			 Proportion_Potential_Additional_Reduction	(ClaimRegion) := makedefined(max_elem(Regional_Population_to_draw - Regional_Scaled_Reduction, 0f) / (Population_in_Region[float32] - Regional_Scaled_Reduction), 0f), descr = "Calculate the percentage of people that are drawn proportionally if the scaled reduction does not yield sufficient people";
@@ -136,13 +113,13 @@ Template Allocate_Population_T
 		}
 		attribute<Person>            Population_beforeAllocation            (CompactedDomain) := Reduced_Population + Population_in_New_BuiltUp_Area, IntegrityCheck = "Population_beforeAllocation_Check", Descr = "";
 		attribute<Person>            Room_for_Population                    (CompactedDomain) := max_elem(LocalMaxima/MaxAllowed_Population - Population_beforeAllocation, 0f), Descr = "";
-		attribute<float32>           ProportionalityFactor                  (CompactedDomain) := max_elem(Suitability/population * Room_for_Population, 0f), Descr = "";
+		attribute<float32>           ProportionalityFactor                  (CompactedDomain) := max_elem(Disaggregation_Proxy/population * Room_for_Population, 0f), Descr = "";
 		attribute<float32>           Sum_ProportionalityFactor                  (ClaimRegion) := sum(ProportionalityFactor , Region_rel), Descr = "";
 		attribute<Person>            RestClaim                                  (ClaimRegion) := max_elem(Claims/Population - sum(Population_beforeAllocation, Region_rel), 0[Person]), Descr = "";
 		attribute<float32>           ScaleFactor_0                              (ClaimRegion) := RestClaim / Sum_ProportionalityFactor, IntegrityCheck = "Check_for_enough_suitable_locations", Descr = ""; //Number of persons per suitability value. 
 		
-		attribute<float32>           Population_0                           (CompactedDomain) := ScaleFactor_0[Region_rel] * Suitability/Population, Descr = ""; //for debug purposes, not really number of persons!
-		attribute<int32>             Sum_Room_for_population                    (ClaimRegion) := sum(Suitability/Population > 0f ? int32(Room_for_Population) : 0i, Region_rel), Descr = ""; //for debug purposes
+		attribute<float32>           Population_0                           (CompactedDomain) := ScaleFactor_0[Region_rel] * Disaggregation_Proxy/Population, Descr = ""; //for debug purposes, not really number of persons!
+		attribute<int32>             Sum_Room_for_population                    (ClaimRegion) := sum(Disaggregation_Proxy/Population > 0f ? int32(Room_for_Population) : 0i, Region_rel), Descr = ""; //for debug purposes
 		attribute<bool>              Check_for_enough_suitable_locations        (ClaimRegion) := ClaimRegion/ignore_check_enough_suitable_locations || Sum_Room_for_population[Person] >= RestClaim, Descr = ""; //for debug purposes
 		
 		unit<uint8> Iter := cat_range(0b,10b) 
@@ -228,7 +205,7 @@ Template Allocate_Population_T
 			attribute<BuiltUpKm2>        PrevState_BUres                                 (CompactedDomain) := OldState_BuiltUp/BuiltUp_Residential_Area; 
 			attribute<BuiltUpKm2>        NewState_BUres                                  (CompactedDomain) := NewState_BuiltUp/BuiltUp_Residential_Area; 
 			// attribute<Km2>               Area                                            (CompactedDomain) := CompactedDomain/area;
-			// attribute<Suit>              Suitability_NonNegative                         (CompactedDomain) := Suitability/Population;
+			// attribute<Suit>              Suitability_NonNegative                         (CompactedDomain) := Disaggregation_Proxy/Population;
 			
 			attribute<BuiltUpKm2>        BUres_Y1990                                     (CompactedDomain) := (SourceData/BuiltUp/Residential/Y1990[km2] / 1[km2] * 1[BuiltUpKm2])[CompactedDomain/org_rel];
 			attribute<BuiltUpKm2>        BUres_Y2020                                     (CompactedDomain) := OldState_BuiltUp/BuiltUp_Residential_Area; 
