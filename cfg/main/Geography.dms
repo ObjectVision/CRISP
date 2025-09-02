@@ -107,6 +107,7 @@ container Geography : using = "units"
 
 		attribute<km2>            area              := const(1[km2], .);
 		attribute<bool>           IsCompactedDomain := Impl/GridData/FreeLand; //, StorageName = "='%LocalDataProjDir%/Temp/CD/'+/ModelParameters/StudyArea+'.tif'";
+		attribute<CompactedDomain>cd_rel			:= invert(CompactedDomain/org_rel);
 		
 		container Read_PerContinentFiles :=
 			for_each_ndnvat(

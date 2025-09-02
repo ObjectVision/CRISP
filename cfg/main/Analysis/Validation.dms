@@ -44,7 +44,16 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 		container Builtup    := Preprocessing/Claims_BuiltUp;
 		container Population := Preprocessing/Claims_Population;
 	}
-	container Suitability := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_GLM('
+	container Suitability:= Suitability_AutoGLM;
+	
+	container Suitability_AutoGLM := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_GLM('
+			+quote(ValidationYears/name)+
+			','+quote(ValidationYears/prev_name)+ 
+			', Allocate_Builtup/'+ValidationYears/prevStateName+
+			', Allocate_Population/'+ValidationYears/prevStateName+
+			', Validation/Calculate_GridDistances'+')'	
+		);
+	container Suitability_GLM2 := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_GLM2('
 			+quote(ValidationYears/name)+
 			','+quote(ValidationYears/prev_name)+ 
 			', Allocate_Builtup/'+ValidationYears/prevStateName+

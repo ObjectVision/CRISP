@@ -124,40 +124,49 @@ container Calibration : using = "geography;SourceData/RegionalUnits;SourceData;C
 		, StorageReadOnly = "true"
 		, SyncMode = "AllTables";
 		
-		unit<uint32> Calibration_variables := Read_XLSX/full_sample
-		{
-			attribute<string> name := AsItemName(Variables);
-			container V := for_each_nedv(name, string(id(.))+'[..]', void, .);
-		}
+		container autoglm:= get_coefs_T(Read_XLSX/AutoGLM);
+		container glm2:= get_coefs_T(Read_XLSX/glm2);
 		
-		unit<uint8> Continents_InCalib : nrofrows = 6
-		{
-			attribute<string> name : ['Africa','Asia','Australia_Oceania','Europe','North_America','South_America'];
-
-			attribute<string> label := name;
-			container V := for_each_nedv(AsItemName(name), String(ID(.))+'[..]', void, .);
-		}
-	
-		container PerContinent := 
-			for_each_nedv(
-				Continents_InCalib/name
-				, 'Calibration_variables/' + Continents_InCalib/name + '[float32]'
-				, Calibration_variables
-				, float32
-			)
-		{
-			attribute<string> var_name (Calibration_variables) := Calibration_variables/name;
-		}
-
-		container PerVar := 
-			for_each_nedv(
-				Calibration_variables/name
-				, 'union_data(Continents_InCalib,'+replace(AsItemList('PerContinent/'+Continents_InCalib/name+'[Calibration_variables/V/@CV@]'),'@CV@', Calibration_variables/Name)+')'
-				, Continents_InCalib
-				, float32
-			);
 		
-		container Coef2domain := Coef2domain_T(PerVar);
+		template get_coefs_T {
+		
+			unit<uint32> in_set;
+			
+			unit<uint32> Calibration_variables := in_set
+			{
+				attribute<string> name := AsItemName(Variables);
+				container V := for_each_nedv(name, string(id(.))+'[..]', void, .);
+			}
+			
+			unit<uint8> Continents_InCalib : nrofrows = 6
+			{
+				attribute<string> name : ['Africa','Asia','Australia_Oceania','Europe','North_America','South_America'];
+
+				attribute<string> label := name;
+				container V := for_each_nedv(AsItemName(name), String(ID(.))+'[..]', void, .);
+			}
+		
+			container PerContinent := 
+				for_each_nedv(
+					Continents_InCalib/name
+					, 'Calibration_variables/' + Continents_InCalib/name + '[float32]'
+					, Calibration_variables
+					, float32
+				)
+			{
+				attribute<string> var_name (Calibration_variables) := Calibration_variables/name;
+			}
+
+			container PerVar := 
+				for_each_nedv(
+					Calibration_variables/name
+					, 'union_data(Continents_InCalib,'+replace(AsItemList('PerContinent/'+Continents_InCalib/name+'[Calibration_variables/V/@CV@]'),'@CV@', Calibration_variables/Name)+')'
+					, Continents_InCalib
+					, float32
+				);
+			
+			container Coef2domain := Coef2domain_T(PerVar);
+		}
 	}
 
 	Template Coef2domain_T
