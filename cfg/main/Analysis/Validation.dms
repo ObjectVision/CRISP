@@ -44,8 +44,19 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 		container Builtup    := Preprocessing/Claims_BuiltUp;
 		container Population := Preprocessing/Claims_Population;
 	}
-	container Suitability:= Suitability_AutoGLM;
 	
+	container Suitability:= Suitability_AutoGLM {
+		unit<uint32> suit_exp:= CompactedDomain {
+			attribute<float32> buperctot00:= InitialState/BuiltUp_Total_Share;
+			attribute<float32> buperctot20:= ='(SourceData/BuiltUp/Total/'+ModelYear+'[km2] / 1[BuiltUpKm2])[CompactedDomain/org_rel]';
+			attribute<float32> suit_autoglm:= Suitability_AutoGLM/Y2010/prob;
+			attribute<float32> et_autoglm:= Allocate_Builtup/Y2010/Disaggregation_Proxy/Expected_increase;
+			attribute<float32> proxy_autoglm:= Allocate_Builtup/Y2010/Disaggregation_Proxy/FinalProb;
+			attribute<float32> suit_glm2:= Suitability_GLM2/Y2010/prob;
+			attribute<float32> suit_cubist:= Suitability_cubist/Y2010/prob;
+			
+		}
+	}
 	container Suitability_AutoGLM := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_GLM('
 			+quote(ValidationYears/name)+
 			','+quote(ValidationYears/prev_name)+ 
@@ -54,6 +65,20 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 			', Validation/Calculate_GridDistances'+')'	
 		);
 	container Suitability_GLM2 := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_GLM2('
+			+quote(ValidationYears/name)+
+			','+quote(ValidationYears/prev_name)+ 
+			', Allocate_Builtup/'+ValidationYears/prevStateName+
+			', Allocate_Population/'+ValidationYears/prevStateName+
+			', Validation/Calculate_GridDistances'+')'	
+		);
+	container Suitability_beta := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_beta('
+			+quote(ValidationYears/name)+
+			','+quote(ValidationYears/prev_name)+ 
+			', Allocate_Builtup/'+ValidationYears/prevStateName+
+			', Allocate_Population/'+ValidationYears/prevStateName+
+			', Validation/Calculate_GridDistances'+')'	
+		);
+	container Suitability_cubist := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_cubist('
 			+quote(ValidationYears/name)+
 			','+quote(ValidationYears/prev_name)+ 
 			', Allocate_Builtup/'+ValidationYears/prevStateName+

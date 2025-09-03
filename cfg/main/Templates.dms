@@ -77,7 +77,63 @@ container Templates
 			unit<uint32> Buffer_NonNull_Cells := select_with_org_rel(buffer == 1b); 
 		}
 	}
+	template ReadCubistModel {
+		
+		parameter<string>  filename := '%projdir%/data/TableChopper.csv';
+		parameter<string>  fieldseparator := ';';
+		unit<uint8>        domain : nrofrows = 254;
 
+		parameter<string> filedata
+			:   StorageType = "str"
+			,   StorageName = "=filename";
+
+		   parameter<string> headerline := readLines(filedata, void, 0);
+
+		   unit<uint32>field := Range(uint32, 0, strcount(headerline, fieldseparator) + 1)
+		   {
+			  attribute<string> name := ReadArray(headerline , field, string, 0);
+		   }
+				
+		   attribute<string> bodylines (domain) := readLines(filedata, domain, headerline/ReadPos);
+
+		   container data := for_each_nedv(
+				  field/name
+				 ,'ReadElems(
+					 BodyLines
+					,string
+				   ,'+ MakeDefined(field/name[sub_or_null(id(field),1)] + '/ReadPos','const(0, domain)')+'
+				 )'
+				 ,domain
+				 ,string
+			  );
+			
+			unit<uint32> Glossary:= /Analysis/Calibration/ReadCoffecients/Variables_Glossary;
+			
+			unit<uint8> rules:= unique(data/rule) {
+				attribute<string> Label:= Values;
+				attribute<string> name:= asitemname(Label);
+				attribute<domain> dataref:= rlookup(Values, data/rule);
+				attribute<string> ruledef:= data/Condition[dataref];
+				attribute<string> eval:=	data/Eval[dataref];
+				
+				container iterative_rulesfix:= loop(iter_variable_references, uint16(#Glossary));
+				
+				template iter_variable_references {
+					parameter<uint16> nriter;
+					container prevstate:= =nriter = 0[uint16] ? 'rules' : 'iterative_rulesfix/Iter'+string(sub_or_null(nriter, 1[uint16]));
+					container nextvalue {
+						attribute<string> ruledef (rules):= replace(uppercase(prevstate/ruledef), uppercase(Glossary/Alias[nriter[Glossary]]), uppercase(Glossary/Address[nriter[Glossary]]));
+						attribute<string> eval (rules):= replace(uppercase(prevstate/eval), uppercase(Glossary/Alias[nriter[Glossary]]), uppercase(Glossary/Address[nriter[Glossary]]));
+					}
+		
+				}
+				
+				attribute<string> sanitized_ruledef:= iterative_rulesfix/LastIter/NextValue/ruledef;
+				attribute<string> sanitized_eval:= iterative_rulesfix/LastIter/NextValue/eval;
+				attribute<string> exec_table:= strlen(sanitized_eval) > 0 ? '(float32('+sanitized_ruledef+') * ('+sanitized_eval+'))' : '';
+				parameter<string> exec_param:= '('+aslist(exec_table, ' + ')+')'; 
+			}
+		}
 	template WriteTable32ToCSV
 	{
 		// begin case parameters
@@ -131,6 +187,64 @@ container Templates
 		,	Storagename = "=filename"
 		,	StorageType = "str";
 	}
+	Template Suitability_T_cubist {
+		parameter<string> ThisYear;
+		parameter<string> PrevYear;
+		container CurrBuState;
+		container CurrPopState;
+		container Calculate_GridDistances;
+		
+		unit<wpoint> domain:= Geography/Domain;
+		
+		unit<uint8> Continents:= /Analysis/Calibration/ReadCoffecients/Read_Cubist/Continental_models;
+		
+		parameter<string> in_exec:= Continents/exec_param;
+		parameter<string> thisyear_exec:= replace(in_exec, 'PREVYEAR', PrevYear);
+		
+		attribute<Suit> Calc (domain) := =thisyear_exec; 
+		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
+				
+		attribute<Suit>      Prob               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(Read_Calc[CompactedDomain/org_rel], -100[suit])' : 'MakeDefined(Write_Calc[CompactedDomain/org_rel], -100[suit])';
+		//attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
+		//attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
+		//attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
+	}
+	Template Suitability_T_beta {
+		parameter<string> ThisYear;
+		parameter<string> PrevYear;
+		container CurrBuState;
+		container CurrPopState;
+		container Calculate_GridDistances;
+		
+		unit<wpoint> domain:= Geography/Domain;
+		
+		container        Coeffs            := Analysis/Calibration/ReadCoffecients/beta/coef2domain/domain; 
+		
+		attribute<Suit> Calc (domain) := ='(CurrPopState/PopulationDensity_8dir/Ln_mean_8dir[float32]                                                 * Coeffs/Ln_PopulationDensity_2000_8dir) + '
+										'(min_elem(Physical/Coast/Location2Coast_m_sqr/Result[float32],250f)                                          * Coeffs/Distance2Coastline) + 
+										(min_elem(Physical/Water/Location2LargeInlandWater_m_sqr/Result[float32],250f)                                * Coeffs/Distance2LargeInlandWater) + 
+										(min_elem(makedefined(Socioeconomic/Infrastructure/Location2Roads45_m_sqr/Result[float32],1000f),250f)        * Coeffs/Distance2SecundaryRoads) + 
+										(Calculate_GridDistances/'+PrevYear+'/Grid_costs_atleast_to/villages                		                  * Coeffs/Grid_costs_atleast_to_villages) + 
+										(Calculate_GridDistances/'+PrevYear+'/Grid_costs_atleast_to/cities            		                          * Coeffs/Grid_costs_atleast_to_cities) + 
+										(Physical/Elevation/Mean_1k[float32]                                                                          * Coeffs/Elevation) + 
+										(Physical/Slope_2021/ReadData[float32]                                                                        * Coeffs/Slope) + 
+										(makedefined(Physical/TerrainRoughnessIndex/TRI_mean_30ss_World[float32], 0f)                                 * Coeffs/TRI_mean) + 
+										(Policy/ProtectedAreas/ReadData[float32]                                                                      * Coeffs/IsProtectedArea) + 
+										(Physical/Water/FloodProneArea/RP100/ReadData_Defined[float32]                                                * Coeffs/IsFloodProneArea_RP100) + 
+										(Physical/Natural_Hazards/Earthquake/Earthquakes_Modified_Mercalli_Intensity/ReadData[float32]                * Coeffs/Earthquakes_MMI_Index) + 
+										(Physical/Natural_Hazards/Landslide/LS_risk[float32]                                                          * Coeffs/LandSlideProne_ARUP) + 
+										(recollect_by_cond(domain/IsCompactedDomain, CurrBuState/BuiltUp_Total_Share)[float32]					  	  * Coeffs/CurrBuState)+									
+										Coeffs/Intercept'; 
+		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_beta'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_beta'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
+				
+		attribute<Suit>      BuiltUp               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(Read_Calc[CompactedDomain/org_rel], -100[suit])' : 'MakeDefined(Write_Calc[CompactedDomain/org_rel], -100[suit])';
+		attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
+		attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
+		attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
+	}
+	// glm2 estimated with a probit link (logit implemented)
 	Template Suitability_T_GLM2 {
 		parameter<string> ThisYear;
 		parameter<string> PrevYear;
@@ -164,13 +278,6 @@ container Templates
 		attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
-		
-		container adhoc_export {
-			attribute<float32> Loc_suit (domain) := recollect_by_cond(domain/IsCompactedDomain, Prob), StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/Locational_suitability_'+ModelParameters/StartYear+'.tif'";
-			attribute<float32> ET      	(domain) := recollect_by_cond(domain/IsCompactedDomain, Dynamic_Expected_increase), StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/Expected_increase_'+ModelParameters/StartYear+'.tif'";
-			attribute<float32> ET_x_suit(domain) := Loc_suit * ET, StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/ET_x_suit_'+ModelParameters/StartYear+'.tif'";
-			attribute<float32> Def_val  (domain) := recollect_by_cond(domain/IsCompactedDomain, FinalProb), StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/Balanced_ET_x_suit_'+ModelParameters/StartYear+'.tif'";
-		}
 	}
 	
 	Template Suitability_T_GLM {
@@ -206,12 +313,5 @@ container Templates
 		attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
-		
-		container adhoc_export {
-			attribute<float32> Loc_suit (domain) := recollect_by_cond(domain/IsCompactedDomain, Prob), StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/Locational_suitability_'+ModelParameters/StartYear+'.tif'";
-			attribute<float32> ET      	(domain) := recollect_by_cond(domain/IsCompactedDomain, Dynamic_Expected_increase), StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/Expected_increase_'+ModelParameters/StartYear+'.tif'";
-			attribute<float32> ET_x_suit(domain) := Loc_suit * ET, StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/ET_x_suit_'+ModelParameters/StartYear+'.tif'";
-			attribute<float32> Def_val  (domain) := recollect_by_cond(domain/IsCompactedDomain, FinalProb), StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/Balanced_ET_x_suit_'+ModelParameters/StartYear+'.tif'";
-		}
 	}
 }

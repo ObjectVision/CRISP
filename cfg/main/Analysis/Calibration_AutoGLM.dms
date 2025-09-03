@@ -118,6 +118,15 @@ container Calibration : using = "geography;SourceData/RegionalUnits;SourceData;C
 	
 	container ReadCoffecients
 	{
+		unit<uint8> Continents_InCalib : nrofrows = 6
+		{
+			attribute<string> name : ['Africa','Asia','Australia_Oceania','Europe','North_America','South_America'];
+
+			attribute<string> label := name;
+			attribute<Classifications/Continents> cont_rel:= rlookup(label, Classifications/Continents/name);
+			container V := for_each_nedv(AsItemName(name), String(ID(.))+'[..]', void, .);
+		}
+		
 		container Read_XLSX 
 		: StorageName = "='%ProjDir%/Data/Calibration/Calibration_continents_'+ModelParameters/Calibration_filedate+'.xlsx'"
 		, StorageType = "gdal.vect"
@@ -126,7 +135,15 @@ container Calibration : using = "geography;SourceData/RegionalUnits;SourceData;C
 		
 		container autoglm:= get_coefs_T(Read_XLSX/AutoGLM);
 		container glm2:= get_coefs_T(Read_XLSX/glm2);
+		container beta:= get_coefs_T(Read_XLSX/beta);
 		
+		container Read_Cubist:= for_each_ne(Continents_InCalib/name, 'Templates/ReadCubistModel('+quote('%ProjDir%/Data/Calibration/cubist_'+Continents_InCalib/name+'_'+ModelParameters/Calibration_filedate+'.csv')+')') {
+			unit<uint8> Continental_models:= Classifications/Continents  {
+				attribute<string> ModelsList:= ='union_data(., '+refs+')';
+				parameter<string> refs:= asitemlist(Classifications/Continents/name+'/rules/exec_param');
+				parameter<string> exec_param:= 'add('+asitemlist('(float32(domain/Continent_rel == '+string(id(.))+'b) * '+ModelsList+')')+')';
+			}
+		}
 		
 		template get_coefs_T {
 		
@@ -136,14 +153,6 @@ container Calibration : using = "geography;SourceData/RegionalUnits;SourceData;C
 			{
 				attribute<string> name := AsItemName(Variables);
 				container V := for_each_nedv(name, string(id(.))+'[..]', void, .);
-			}
-			
-			unit<uint8> Continents_InCalib : nrofrows = 6
-			{
-				attribute<string> name : ['Africa','Asia','Australia_Oceania','Europe','North_America','South_America'];
-
-				attribute<string> label := name;
-				container V := for_each_nedv(AsItemName(name), String(ID(.))+'[..]', void, .);
 			}
 		
 			container PerContinent := 
@@ -166,6 +175,43 @@ container Calibration : using = "geography;SourceData/RegionalUnits;SourceData;C
 				);
 			
 			container Coef2domain := Coef2domain_T(PerVar);
+		}
+		unit<uint32> Variables_Glossary: nrofrows = 23 {
+		
+			attribute<string> Alias:= Elements/inval[((id(.)*3)+0)[Elements]];
+			attribute<string> Description:= Elements/inval[((id(.)*3)+1)[Elements]];
+			attribute<string> Address:= Elements/inval[((id(.)*3)+2)[Elements]];
+			attribute<string> LabelText:= Alias;
+			
+			unit<uint32> Elements:= range(uint32, 0, #Variables_Glossary*3) {
+			
+				attribute<string> inval: [
+					//'Calibration Alias',	'Description',	'Model address',
+					'Intercept',	'Constant value',	'const(1f,domain,float32)',
+					'CurrBuState',	'Current built-up value',	'recollect_by_cond(domain/IsCompactedDomain,  CurrBuState/BuiltUp_Total_Share)[float32]',
+					'BuPercTot_2000',	'Built-up value in 2000',	'recollect_by_cond(domain/IsCompactedDomain,  CurrBuState/BuiltUp_Total_Share)[float32]',
+					'ln_PopulationDensity_2000_8dir',	'Current neighbourhood population density',	'CurrPopState/PopulationDensity_8dir/Ln_mean_8dir[float32]',
+					'Distance2Coastline',	'Distance to coastline',	'min_elem(Physical/Coast/Location2Coast_m_sqr/Result[float32], 250f)',
+					'Distance2LargeInlandWater',	'Distance to large inland waterbody',	'min_elem(Physical/Water/Location2LargeInlandWater_m_sqr/Result[float32], 250f)',
+					'Distance2MajorRoads',	'Distance to major roads',	'min_elem(makedefined(Socioeconomic/Infrastructure/Location2Roads123_m_sqr/Result[float32],1000f),250f)',
+					'Distance2SecundaryRoads',	'Distance to secondary roads',	'min_elem(makedefined(Socioeconomic/Infrastructure/Location2Roads45_m_sqr/Result[float32],1000f),250f)',
+					'Distance2SecondaryRoads',	'Distance to secondary roads',	'min_elem(makedefined(Socioeconomic/Infrastructure/Location2Roads45_m_sqr/Result[float32],1000f),250f)',
+					'Grid_costs_atleast_to_cities',	'Grid cost to closest city',	'Calculate_GridDistances/PREVYEAR/Grid_costs_atleast_to/cities',
+					'gc_cities',	'Grid cost to closest city',	'Calculate_GridDistances/PREVYEAR/Grid_costs_atleast_to/cities',
+					'Grid_costs_atleast_to_towns',	'Grid cost to closest town or city',	'Calculate_GridDistances/PREVYEAR/Grid_costs_atleast_to/towns',
+					'gc_towns',	'Grid cost to closest town or city',	'Calculate_GridDistances/PREVYEAR/Grid_costs_atleast_to/towns',
+					'Grid_costs_atleast_to_villages',	'Grid cost to closest village, towns, or city',	'Calculate_GridDistances/PREVYEAR/Grid_costs_atleast_to/villages',
+					'gc_villages',	'Grid cost to closest village, towns, or city',	'Calculate_GridDistances/PREVYEAR/Grid_costs_atleast_to/villages',
+					'Elevation',	'Elevation',	'Physical/Elevation/Mean_1k[float32]',
+					'slope',	'Slope',	'Physical/Slope_2021/ReadData[float32]',
+					'TRI_mean',	'TRI',	'makedefined(Physical/TerrainRoughnessIndex/TRI_mean_30ss_World[float32], 0f)',
+					'IsProtectedArea',	'Is a protected area',	'Policy/ProtectedAreas/ReadData[float32]',
+					'IsFloodProneArea_RP100',	'Is flood prone  (100y return period)',	'Physical/Water/FloodProneArea/RP100/ReadData_Defined[float32]',
+					'Earthquakes_MMI_Index',	'Earthquakes occurence (MMI index)',	'Physical/Natural_Hazards/Earthquake/Earthquakes_Modified_Mercalli_Intensity/ReadData[float32]',
+					'LandSlideProne_ARUP',	'Landslides likeliness (ARUP index)',	'Physical/Natural_Hazards/Landslide/LS_risk[float32]',
+					'Landslide_prone',	'Landslides likeliness (ARUP index)',	'Physical/Natural_Hazards/Landslide/LS_risk[float32]'
+				];
+			}
 		}
 	}
 
