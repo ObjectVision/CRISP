@@ -10,12 +10,12 @@ container SourceData : using = "geography;units"
 			unit<uint32> FA_data;
 			unit<uint32> BU_estimates
 			{
-				attribute<FunctionalAreas_all> FunctionalArea_all_rel := rlookup(uint32(UNIT_ID), id(FunctionalAreas_all)+1);
+				attribute<FunctionalAreas_all> FunctionalArea_all_rel := rlookup(uint32(UNIT_ID), uint32(FunctionalAreas_all/FAID));
 				attribute<FunctionalAreas>     FunctionalArea_rel     := rlookup(FunctionalArea_all_rel, FunctionalAreas/org_rel);
 			}
 			unit<uint32> POP_estimates
 			{
-				attribute<FunctionalAreas_all> FunctionalArea_all_rel := rlookup(uint32(UNIT_ID), id(FunctionalAreas_all)+1);
+				attribute<FunctionalAreas_all> FunctionalArea_all_rel := rlookup(uint32(UNIT_ID), uint32(FunctionalAreas_all/FAID));
 				attribute<FunctionalAreas>     FunctionalArea_rel     := rlookup(FunctionalArea_all_rel, FunctionalAreas/org_rel);
 			}
 		}

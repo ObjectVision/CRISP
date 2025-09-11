@@ -5,7 +5,7 @@ container Population  : using = "units;geography;classifications;sourcedata/regi
 			GHS_years/name
 			, domain
 			, float64
-			, '%ToBURPDataDir%/Population/POP_'+string(GHS_years/year)+'_'+ModelParameters/Gridsize+'_WPP2024.tif'  
+			, '%ToBURPDataDir%/Population/POP_'+string(GHS_years/year)+'_'+ModelParameters/Gridsize+'_WPP2024_v2.tif'  
 			,'gdal.grid'
 		); //, URL = "https://human-settlement.emergency.copernicus.eu/download.php?ds=pop"; (invalid URL as theses are custom results for 2BURP, aligned with the WPP24 population projections)
 
@@ -66,9 +66,13 @@ container Population  : using = "units;geography;classifications;sourcedata/regi
 		parameter<string> Year;
 		///
 		
+		attribute<Person> 			 Population_incl_nobuiltup			     (domain) := ='FunctionalAreas/IsStudyArea_domain ? PerYear_CorrectForNoData/'+Year+'[Person] : null_f';
 		attribute<Person>            Population_domain                       (domain) := ='FunctionalAreas/IsStudyArea_domain ? PerYear_Unrounded/'+Year+'[Person] : null_f';
 		attribute<Person>            Population_org                 (CompactedDomain) := Population_domain[CompactedDomain/org_rel]; 
-		attribute<Person>            Population_Trunc_domain        (CompactedDomain) := min_elem_alldefined(Population_org, maxmax_saturation); //truncate for unrealistic densities (e.g. very much population in hardly any builtup area).
+		attribute<Person>			 Population_domain_FA			(FunctionalAreas) := sum(Population_incl_nobuiltup[CompactedDomain/org_rel], FunctionalAreas/per_CompactedDomain);
+		attribute<Person>			 Population_without_builtup		(FunctionalAreas) := max_elem(sum(Population_incl_nobuiltup[CompactedDomain/org_rel], FunctionalAreas/per_CompactedDomain) - sum(Population_org, FunctionalAreas/per_CompactedDomain), 0[Person]);
+		attribute<Person>			 Population_rescaled			(CompactedDomain) := Population_org + scalesum(Population_org, FunctionalAreas/per_CompactedDomain, Population_without_builtup);
+		attribute<Person>            Population_Trunc_domain        (CompactedDomain) := min_elem_alldefined(Population_rescaled, maxmax_saturation); //truncate for unrealistic densities (e.g. very much population in hardly any builtup area).
 		parameter<Person>            maxmax_saturation                                := ModelParameters/Pop_maxmax_saturation;
 		attribute<Person>            Population_base                (CompactedDomain) := Population_Trunc_domain;
 		attribute<Person>            Population_trunc               (CompactedDomain) := uint32(Population_base)[Person];
@@ -80,6 +84,7 @@ container Population  : using = "units;geography;classifications;sourcedata/regi
 		attribute<NrPerson>          Write_Population_trunc_domain_result    (domain) := recollect_by_cond(domain/IsCompactedDomain, Population)
 		, StorageName = "='%LocalDataProjDir%/Results/'+ModelParameters/StudyArea+'/Population_'+Year+'_'+ModelParameters/domain_EPSG+'.tif'";
 		attribute<NrPerson>          Read_Population                         (domain) : StorageName = "='%LocalDataProjDir%/Results/'+ModelParameters/StudyArea+'/Population_'+Year+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "true";
+		attribute<NrPerson>			 Population_read_FA			(FunctionalAreas) := sum(Read_Population[CompactedDomain/org_rel], FunctionalAreas/per_CompactedDomain);
 		parameter<bool> 			 check_file:= ='strlen('+quote(ExistingFile('', '%LocalDataProjDir%/Results/'+ModelParameters/StudyArea+'/Population_'+Year+'_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
 	}
 	

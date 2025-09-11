@@ -2,5 +2,15 @@ container Postprocessing
 {	
 	#include<Mozaiking.dms>
 	#include<Indicators.dms>
+	
+	container mozaik_pop_sum_fa:= for_each_nedv(
+		Classifications/AllYears/name,
+		'Mozaiks/population_mozaiks_exist/'+Classifications/AllYears/name+' ? 
+			sum(uint32(Mozaiks/read_population_mozaik/'+Classifications/AllYears/name+'), /sourcedata/RegionalUnits/FunctionalAreas_all_grid_world/FA_all_rel)
+			: const(0, /sourcedata/RegionalUnits/FunctionalAreas_all, uint32)'
+		, /sourcedata/RegionalUnits/FunctionalAreas_all
+		, uint32);
+		
+	
 	// #include <Validation.dms>
 }

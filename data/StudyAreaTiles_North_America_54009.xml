@@ -2,13 +2,13 @@
 
 <DocType name="GeoDmsMetaInfo">
 <DefaultInfo>
-	<FullName>/Geography/Impl/StudyAreaTile_Create/UB_sub_y
+	<FullName>/geography/Impl/StudyAreaTile_Create_Mollweide/UB_sub_y
 	</FullName>
 	<GeoDmsVersion>GeoDms 16.0.0 [Oct 27 2024 14:36:36]
 	</GeoDmsVersion>
-	<SessionStartTime>2024-11-13 22:42:48
+	<SessionStartTime>2025-02-14 12:53:25
 	</SessionStartTime>
-	<CurrentTime>2024-11-13 22:44:50
+	<CurrentTime>2025-02-14 14:54:10
 	</CurrentTime>
 	<StatusFlags>0x537 = AdminMode SuspendForGUI ShowStateColors TreeViewVisible DetailsVisible MultiThreading1 MultiThreading2 
 	</StatusFlags>
@@ -18,7 +18,7 @@
 	</GeoDmsVersion>
 </Software>
 <Config>
-	<FullName>/Geography/Impl/StudyAreaTile_Create/UB_sub_y
+	<FullName>/geography/Impl/StudyAreaTile_Create_Mollweide/UB_sub_y
 	</FullName>
 	<Expr>pointrow(UB_sub)
 	</Expr>
@@ -38,32 +38,25 @@
 		On branch main<BR/>
 		Your branch is up to date with &apos;origin/main&apos;.<BR/>
 		<BR/>
-		Changes to be committed:<BR/>
-		  (use &quot;git restore --staged &lt;file&gt;...&quot; to unstage)<BR/>
-			new file:   Desktop.ini<BR/>
-		<BR/>
 		Changes not staged for commit:<BR/>
 		  (use &quot;git add &lt;file&gt;...&quot; to update what will be committed)<BR/>
 		  (use &quot;git restore &lt;file&gt;...&quot; to discard changes in working directory)<BR/>
-			modified:   cfg/main/Analysis/Calibration_AutoGLM.dms<BR/>
-			modified:   cfg/main/Analysis/Future/Indicators.dms<BR/>
-			modified:   cfg/main/Geography.dms<BR/>
 			modified:   cfg/main/ModelParameters.dms<BR/>
+			modified:   cfg/main/SourceData.dms<BR/>
 		<BR/>
 		Untracked files:<BR/>
 		  (use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)<BR/>
+			calibration/.Rhistory<BR/>
 			cfg/main/Preprocessing/DegreeOfUrbanisation_old.dms<BR/>
 			cfg/test/<BR/>
-			data/Claims/FA_BU_POP_projections_v4 - Copy.xlsx<BR/>
-			data/Claims/FA_BU_POP_projections_v8_fixed_bucap.xlsx<BR/>
-			data/StudyAreaTiles_Africa_54009.dbf<BR/>
-			data/StudyAreaTiles_Africa_54009.xml<BR/>
-			data/StudyAreaTiles_Asia_54009.dbf<BR/>
-			data/StudyAreaTiles_Asia_54009.xml<BR/>
-			data/StudyAreaTiles_Australia_Oceania_54009.dbf<BR/>
-			data/StudyAreaTiles_Australia_Oceania_54009.xml<BR/>
+			data/Claims/FA_BU_POP_projections_v10.xlsx<BR/>
+			data/Claims/FA_BU_POP_projections_v9.xlsx<BR/>
+			data/StudyAreaTiles_Italy_54009.dbf<BR/>
+			data/StudyAreaTiles_Italy_54009.xml<BR/>
+			reporting/.Rhistory<BR/>
 		<BR/>
-		de13f1b43287eb3b4dd8e465e74102455d3df5f3<BR/>
+		no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)<BR/>
+		aa0b5466a6686f58deec40c39c8fa7a0def307b6<BR/>
 		
 	</RevisionInfo>
 </Git>

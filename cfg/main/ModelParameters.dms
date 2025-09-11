@@ -1,8 +1,8 @@
 container ModelParameters : using = "units;sourcedata"
 {
 	//GENERAL
-	parameter<string>                    StudyArea_manually                                  := 'North_America'     , Descr = "Choose the study area for the analysis. Options are: Nicaragua Nigeria Netherlands Morocco Chad Tanzania RwandaTanzKen Asia Africa Europe Australia_Oceania South_America North_America World";
-	parameter<bool>                    	 Use_TempTifFiles_manually                           := TRUE     	 , Descr = "If working interactively in the GUI, set this value to TRUE after calculation the allocation results. Then the indicators are calculated from precalculated tif-files. Otherwise, choose false.";
+	parameter<string>                    StudyArea_manually                                  := 'Africa'     , Descr = "Choose the study area for the analysis. Options are: Nicaragua Nigeria Netherlands Morocco Chad Tanzania RwandaTanzKen Asia Africa Europe Australia_Oceania South_America North_America World";
+	parameter<bool>                    	 Use_TempTifFiles_manually                           := FALSE     	 , Descr = "If working interactively in the GUI, set this value to TRUE after calculation the allocation results. Then the indicators are calculated from precalculated tif-files. Otherwise, choose false.";
 	parameter<string>                    StartYear                                           := 'Y2020'      , Descr = "This indicates the starting year of the model. It should correspond to an existing GHSL year.";
 	parameter<float64>                   MW_Gridsize                                         := 1000d        , Descr = "This parameter indicates which grid size should be used for the MollWeide grids. 1km grid = 1,000,000 m2, 100m grid = 10,000 m2";
 	parameter<float64>                   MW_Subgridsize                                      := 100d         , Descr = "This parameter indicates which grid size should be used for the MollWeide subgrids. 1km grid = 1,000,000 m2, 100m grid = 10,000 m2";
@@ -10,10 +10,10 @@ container ModelParameters : using = "units;sourcedata"
 	parameter<float64>                   WGS_Subgridsize                                     := 3d           , Descr = "This parameter indicates which grid size should be used for the WGS84/LatLong subgrids, represented in arc second. Where 3ss corresponds to roughly a 100m grid at the equator.";
 	parameter<string>                    domain_EPSG                                         := '54009'      , Descr = "Choose the projection to use in the model. Options: 54009 (Mollweide) or 4326 (WGS84)";  
 	parameter<string>                    Calibration_filedate                                := '20241205'   , Descr = "Which calibation filedate should be used.";
-	parameter<string>                    Claim_fileversion                                   := 'v10'        , Descr = "Which claim file version should be used.";
-	parameter<string>                    FunctionalAreas_filedate                            := '20250110'   , Descr = "Which functional area filedate should be used.";
+	parameter<string>                    Claim_fileversion                                   := 'v12'        , Descr = "Which claim file version should be used.";
+	parameter<string>                    FunctionalAreas_filedate                            := '20250428'   , Descr = "Which functional area filedate should be used.";
 
-	parameter<string>                    Additional_FileSuffix                               := '_autoresolved_calib_20241205'           , Descr = "Add text here to create distinct result/indicator file names apart from the suffix parameter already described above.";  //'_UnlimPopIncrease'
+	parameter<string>                    Additional_FileSuffix                               := '_pop_wpp24_v2_calib_20241205'           , Descr = "Add text here to create distinct result/indicator file names apart from the suffix parameter already described above.";  //'_UnlimPopIncrease'
 			
 	//BUILT UP ALLOCATION
 	parameter<float32>                   BU_r_if_LocalMax                                    := 0.11f        , Descr = "Set the maximum growth rate of the built-up share if the cell is a local maximum.";
@@ -33,7 +33,8 @@ container ModelParameters : using = "units;sourcedata"
 	parameter<Person_BuiltUpKm2>         Pop_max_saturation                                  := 100000[Person_BuiltUpKm2];
 	parameter<Person>                    Pop_maxmax_saturation                               := 1000000[Person];
 	
-	unit<uint32> ignore_Check_for_enough_suitable_locations : nrofrows = 0 {attribute<uint32> org_rels :=  const(null_u, .); parameter<bool> Ignore_all:= false;} // [792, 793, 730]; //=  const(null_u, .);} 792: Congo, 2030; 793: Congo, 2030; 730: Chad, 2030
+	//277, area with excessive pop / bu in Indonesia in 2030
+	unit<uint32> ignore_Check_for_enough_suitable_locations : nrofrows = 1 {attribute<uint32> org_rels : [277];} //=  const(null_u, .); parameter<bool> Ignore_all:= false;} // [792, 793, 730]; //=  const(null_u, .);} 792: Congo, 2030; 793: Congo, 2030; 730: Chad, 2030
 	
 	unit<uint32> ignore_Check_for_enough_drawn_population : nrofrows = 0
 	{attribute<uint32> org_rels:= const(null_u, .);}

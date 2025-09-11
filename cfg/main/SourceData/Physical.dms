@@ -205,6 +205,7 @@ container Physical : using = "geography;classifications"
 
 
 		unit<ipoint> Location2LargeInlandWater_m_sqr
+		//:	StorageName     = "='%ToBURPDataDir%/physical/water/'+ModelParameters/StudyArea+'/Location2LargeInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'"
 		:	StorageName     = "='%ToBURPDataDir%/physical/water/World/Location2LargeInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'"
 		,	StorageType     = "gdal.grid"
 		,	StorageReadOnly = "True"
@@ -216,6 +217,7 @@ container Physical : using = "geography;classifications"
 			attribute<km>      Result         (domain) := MakeDefined(min_elem(Corr_latfactor[meter], 250000[meter])[km], 250[km]);
 		}
 		unit<ipoint> Location2AnyInlandWater_m_sqr
+		//:	StorageName     = "='%ToBURPDataDir%/physical/water/'+ModelParameters/StudyArea+'/Location2AnyInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'"
 		:	StorageName     = "='%ToBURPDataDir%/physical/water/World/Location2AnyInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'"
 		,	StorageType     = "gdal.grid"
 		,	StorageReadOnly = "True"

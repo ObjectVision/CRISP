@@ -147,8 +147,17 @@ container RegionalUnits
 	, DialogData      = "Mollweide_base"
 	{
 		attribute<uint32> ReadData (domain);
-		attribute<FunctionalAreas_all> FA_all_rel (domain):= rlookup(ReadData, uint32(FunctionalAreas_all/FAID));
+		attribute<FunctionalAreas_all> FA_all_rel (domain):= rlookup(ReadData, uint32(FunctionalAreas_all/gridval));
 		attribute<FunctionalAreas>	 FA_rel		  (domain):= invert(FunctionalAreas/org_rel)[FA_all_rel];
+	}
+	unit<ipoint> FunctionalAreas_all_grid_world
+	: Storagename = "='%ToBURPDataDir%/Regions/fas_combined_'+/ModelParameters/FunctionalAreas_filedate+'_54009_1000m.tif'"
+	, StorageType = "gdal.grid"
+	, StorageReadOnly = "true"
+	, DialogData      = "Mollweide_base"
+	{
+		attribute<uint32> ReadData (Impl/MakeDomain_World/domain);
+		attribute<FunctionalAreas_all> FA_all_rel (Impl/MakeDomain_World/domain):= rlookup(ReadData, uint32(FunctionalAreas_all/gridval));
 	}
 	unit<uint32> FunctionalAreas_all
 	: StorageName = "='%ToBURPDataDir%/Regions/fas_combined_'+/ModelParameters/FunctionalAreas_filedate+'_54009.shp'"
@@ -164,13 +173,14 @@ container RegionalUnits
 			parameter<uint32> PenColor   := rgb(255,0,0), DialogType = "PenColor";		
 		}
 		
-		attribute<string>                 Label                                 := name;
+		attribute<string>                 Label                                 := 'z_'+string(gridval);
 		attribute<.>                      per_domain                   (domain) := poly2grid(Geometry_, domain);
 		// attribute<.>                      per_CompactedDomain (CompactedDomain) := per_domain[CompactedDomain/domain_rel];
 		attribute<bool>                   IsStudyArea_domain           (domain) := IsDefined(per_domain) && IsDefined(CurrentProjection/per_domain);
 		attribute<bool>                   IsStudyArea                           := modus(IsStudyArea_domain, per_domain);
-		attribute<string>                 Continent                             := rjoin(country, set_countries/zoneid, set_countries/continent);
-		attribute<set_countries>          Country_rel                           := rlookup(country, set_countries/zoneid);
+		//attribute<string>                 Continent                             := rjoin(country, set_countries/zoneid, set_countries/continent);
+		//attribute<set_countries>          Country_rel                           := rlookup(country, set_countries/zoneid);
+		attribute<uint32> 				 faid:= uint32(gridval);
 	}
 	
 	unit<uint32> FunctionalAreas := select_with_org_rel(FunctionalAreas_all/IsStudyArea)
@@ -182,12 +192,12 @@ container RegionalUnits
 			parameter<uint32> BrushColor := null_u, DialogType = "BrushColor";
 			parameter<uint32> PenColor   := rgb(10,10,10), DialogType = "PenColor";
 		}
-		attribute<string> 		  Label									:= FunctionalAreas_all/name[org_rel];
+		attribute<string> 		  Label									:= FunctionalAreas_all/label[org_rel];
 		attribute<string>         item_name                             := AsItemName(Label);
 		attribute<.>              per_domain                   (domain) := FunctionalAreas_all_grid/FA_rel;
 		attribute<bool>           IsStudyArea_domain           (domain) := IsDefined(per_domain) && IsDefined(CurrentProjection/per_domain);
 		attribute<.>              per_CompactedDomain (CompactedDomain) := per_domain[CompactedDomain/domain_rel];
-		attribute<bool>           ignore_check_enough_suitable_locations  := isdefined(rlookup(org_rel, ModelParameters/ignore_Check_for_enough_suitable_locations/org_rels)) || ModelParameters/ignore_Check_for_enough_suitable_locations/Ignore_all;
+		attribute<bool>           ignore_check_enough_suitable_locations  := isdefined(rlookup(org_rel, ModelParameters/ignore_Check_for_enough_suitable_locations/org_rels));// || ModelParameters/ignore_Check_for_enough_suitable_locations/Ignore_all;
 		attribute<bool>           ignore_Check_for_enough_drawn_population:= isdefined(rlookup(org_rel, ModelParameters/ignore_Check_for_enough_drawn_population/org_rels));
 		attribute<km2>            cd_area                               := sum(CompactedDomain/area, CompactedDomain/FunctionalAreas_rel);
 		attribute<string> 		  country								:= FunctionalAreas_all/country[org_rel];
