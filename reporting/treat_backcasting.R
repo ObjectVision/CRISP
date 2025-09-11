@@ -29,9 +29,9 @@ if(
   
   #rawdata<-read.csv(paste0(reportingdir, "/", "df_smod_est_v7.csv"), stringsAsFactors = FALSE)
   if (toupper(classification)==toupper("DegUrba_lvl1")) {
-      rawdata<-read.csv(paste0(reportingdir, "/", "degurba_est__RESC_1__RUR_RES_0__URB_INTERP_MODEL_UN_v2025_04_L1.csv"), stringsAsFactors = FALSE) 
+      rawdata<-read.csv(paste0(reportingdir, "/", "degurba_est__RESC_1__RUR_RES_0__URB_INTERP_MODEL_UN_v2025_05_L1_1July.csv"), stringsAsFactors = FALSE) 
   } else {
-    rawdata<-read.csv(paste0(reportingdir, "/", "degurba_est__RESC_1__RUR_RES_0__URB_INTERP_MODEL_UN_v2025_04_L2.csv"), stringsAsFactors = FALSE)
+    rawdata<-read.csv(paste0(reportingdir, "/", "degurba_est__RESC_1__RUR_RES_0__URB_INTERP_MODEL_UN_v2025_05_L2_1July.csv"), stringsAsFactors = FALSE)
   }
   
   rawdata<-subset(rawdata, year<1975 & smod != "wpp" & smod !="wup")
@@ -71,7 +71,7 @@ if(
   temp$year<-temp$Group.4
   temp$area<-NA
   temp$pop<-temp$x
-  temp$Builtup<-NA
+  temp$builtup<-NA
   #temp$abandoned<-NA
   #temp$emerged<-NA
   
@@ -83,32 +83,32 @@ if(
   
   # values conversion
   temp$cls_label[temp$cls_label=="cities"]<-"Urban centre"
-  temp$cls_code[temp$cls_label=="cities"]<-30
+  temp$cls_code[temp$cls_label=="Urban centre"]<-30
   temp$cls_label[temp$cls_label=="UC"]<-"Urban centre"
-  temp$cls_code [temp$cls_label=="UC"]<-30
+  temp$cls_code [temp$cls_label=="Urban centre"]<-30
   temp$cls_label[temp$cls_label=="DUC"]<-"Dense urban cluster"
-  temp$cls_code [temp$cls_label=="DUC"]<-23
+  temp$cls_code [temp$cls_label=="Dense urban cluster"]<-23
   temp$cls_label[temp$cls_label=="SDUC"]<-"Semi-dense urban cluster"
-  temp$cls_code [temp$cls_label=="SDUC"]<-22
+  temp$cls_code [temp$cls_label=="Semi-dense urban cluster"]<-22
   temp$cls_label[temp$cls_label=="SBRB"]<-"Suburban grid cell"
-  temp$cls_code [temp$cls_label=="SBRB"]<-21
+  temp$cls_code [temp$cls_label=="Suburban grid cell"]<-21
   temp$cls_label[temp$cls_label=="towns"]<-"Urban cluster"
-  temp$cls_code[temp$cls_label=="towns"]<-20
+  temp$cls_code[temp$cls_label=="Urban cluster"]<-20
   temp$cls_label[temp$cls_label=="UCL"]<-"Urban cluster"
-  temp$cls_code [temp$cls_label=="UCL"]<-20
+  temp$cls_code [temp$cls_label=="Urban cluster"]<-20
   temp$cls_label[temp$cls_label=="RC"]<-"Rural cluster"
-  temp$cls_code [temp$cls_label=="RC"]<-13
+  temp$cls_code [temp$cls_label=="Rural cluster"]<-13
   temp$cls_label[temp$cls_label=="LDR"]<-"Low density rural grid cell"
-  temp$cls_code [temp$cls_label=="LDR"]<-12
+  temp$cls_code [temp$cls_label=="Low density rural grid cell"]<-12
   temp$cls_label[temp$cls_label=="VLDR"]<-"Very low density grid cell"
-  temp$cls_code [temp$cls_label=="VLDR"]<-11
+  temp$cls_code [temp$cls_label=="Very low density grid cell"]<-11
   temp$cls_label[temp$cls_label=="rural"]<-"Rural grid cells"
-  temp$cls_code[temp$cls_label=="rural"]<-10
+  temp$cls_code[temp$cls_label=="Rural grid cells"]<-10
   temp$cls_label[temp$cls_label=="WATER"]<-"Water"
-  temp$cls_code [temp$cls_label=="WATER"]<-00
+  temp$cls_code [temp$cls_label=="Water"]<-00
   
   out_columns<-rbind(out_columns, temp)
   
-  write.csv(out_columns, row.names=FALSE, file=paste0("backcast_", boundaryset, "_",degurba_level,".csv"))
+  write.csv(out_columns, row.names=FALSE, file=paste0("backcast_", boundaryset, "_",classification,".csv"))
   
 }

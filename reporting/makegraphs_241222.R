@@ -1,8 +1,8 @@
 ################### specifics of run
-inputdir<-"C:/Users/asobi/Documents/Werk/2023_global_lu_model/results/20250415_Marcello"
+inputdir<-"C:/Users/asobi/Documents/Werk/2023_global_lu_model/results/20250505_Marcello"
 reportingdir<-"D:/ProjDir/2BURP/reporting/"
 boundaryset<-"UN_countries" #or Countries, UN_countries, UN_intermediate_regions, Continents_1RUS_uint32, Continents_uint32, World
-classification<-"DegUrba_lvl2"
+classification<-"DegUrba_lvl1"
 runset<-"" #"_v9_IntMigr-0.01_PopRSuitScale-0.9_PopShareNewBU-1_autoresolved_calib_20241205_nobu_Marcello" # new calibration, preferred spec?
 
 settlement_graphs<-FALSE
@@ -31,7 +31,7 @@ indata<-read.csv(paste0(inputdir,"/",boundaryset,"_",classification,runset,".csv
 
 #indata$ru_code<-indata$ru_label.1 temp fix unnecessary now
 
-indata<-subset(indata, select = c(ru_label, ru_code, cls_label, cls_code, year, area, pop, Builtup))
+indata<-subset(indata, select = c(ru_label, ru_code, cls_label, cls_code, year, area, pop, builtup))
 
 # fix typo issues with degurba label
 indata$cls_label<-as.character(indata$cls_label)
@@ -73,14 +73,15 @@ for (incode in codeslist) {
     #popplotdata<-subset(poponlydata, as.character(ru_label)==as.character(name) | ru_code==incode)
     popplotdata<-subset(plotdata, as.character(ru_label)==as.character(name) | ru_code==incode | ru_code==as.character(name))
       
-    #pop_density_graph(plotdata, printname = name, storename = incode, cvar = factor(plotdata$cls_label, level=order))
-    
     # created indexed version for areas
-    #area_graph<-subset(plotdata, select=c("year","cls_code","cls_label","area"))
-    #index_areas<-subset(plotdata, year==2020, select=c("cls_code", "area"))
-    #area_graph<-merge(area_graph, index_areas, by="cls_code")
+    area_data<-subset(plotdata, year>=1975)
+    pop_density_graph(area_data, printname = name, storename = incode, cvar = factor(area_data$cls_label, level=order))
     
-    #indexed_area_graph(area_graph, xvar=area_graph$year, printname = name, storename = incode, yvar=(area_graph$area.x / area_graph$area.y), cvar=factor(area_graph$cls_label, level=order))
+    area_graph<-subset(plotdata, year>=1975, select=c("year","cls_code","cls_label","area"))
+    index_areas<-subset(plotdata, year==2020, select=c("cls_code", "area"))
+    area_graph<-merge(area_graph, index_areas, by="cls_code")
+    
+    indexed_area_graph(area_graph, xvar=area_graph$year, printname = name, storename = incode, yvar=(area_graph$area.x / area_graph$area.y), cvar=factor(area_graph$cls_label, level=order))
     
     popplotdata<-popplotdata[order(popplotdata$year), ]
     popplotdata$pop_cumu<-ave(popplotdata$pop, popplotdata$cls_label, FUN=cumsum)
