@@ -118,6 +118,11 @@ container RegionalUnits
 		attribute<Mollweide_base> Geometry_MW (poly):= org_rel->Geometry_MW;
 		attribute<string> 	label:= org_rel->name;
 		attribute<string>   code:= org_rel->code;
+		
+		unit<uint32> continents_store:= Continents_uint32, storagename = "F:/temp/continents.dbf" {
+			attribute<Mollweide_base> Geometry (poly):= geometry_MW, storagename = "F:/temp/continents.shp";
+			attribute<string> name:= label;
+		}
 	}
 	unit<uint32> Continents_1RUS_uint32:= range(uint32, 0, #Continents), descr = "uint32 version of the continents unit, needed for reporting in postprocessing." {
 		attribute<Continents> org_rel:= id(.)[Continents];
