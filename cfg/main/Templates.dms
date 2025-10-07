@@ -112,6 +112,7 @@ container Templates
 			unit<uint8> rules:= unique(data/rule) {
 				attribute<string> Label:= Values;
 				attribute<string> name:= asitemname(Label);
+				attribute<uint8>  num:= uint8(replace(UpperCase(Label), 'RULE', ''));
 				attribute<domain> dataref:= rlookup(Values, data/rule);
 				attribute<string> ruledef:= data/Condition[dataref];
 				attribute<string> eval:=	data/Eval[dataref];
@@ -130,8 +131,11 @@ container Templates
 				
 				attribute<string> sanitized_ruledef:= iterative_rulesfix/LastIter/NextValue/ruledef;
 				attribute<string> sanitized_eval:= iterative_rulesfix/LastIter/NextValue/eval;
+				attribute<string> exec_rules_table:= strlen(sanitized_ruledef) > 0 ? '('+sanitized_ruledef+' ? '+string(num)+'f : 0f)' : '';
 				attribute<string> exec_table:= strlen(sanitized_eval) > 0 ? '(float32('+sanitized_ruledef+') * ('+sanitized_eval+'))' : '';
 				parameter<string> exec_param:= '('+aslist(exec_table, ' + ')+')'; 
+				parameter<string> exec_rules:=  '('+aslist(exec_rules_table, ' + ')+')'; 
+				
 			}
 		}
 	template WriteTable32ToCSV
@@ -201,11 +205,25 @@ container Templates
 		parameter<string> in_exec:= Continents/exec_param;
 		parameter<string> thisyear_exec:= replace(in_exec, 'PREVYEAR', PrevYear);
 		
+		parameter<string> in_rules:= Continents/exec_rules;
+		parameter<string> thisyear_rules:= replace(in_rules, 'PREVYEAR', PrevYear);
+		
 		attribute<Suit> Calc (domain) := =thisyear_exec; 
 		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
 		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
-				
+		
+		attribute<float32> Rules (domain):= =thisyear_rules;
+		attribute<float32> Write_Rules (domain) := Rules, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		
 		attribute<Suit>      Prob               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(max_elem(Read_Calc[CompactedDomain/org_rel], 0f), -100[suit])' : 'MakeDefined(max_elem(Write_Calc[CompactedDomain/org_rel], 0f), -100[suit])';
+		
+		container rule_eval:= for_each_nedv(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name, replace(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/sanitized_ruledef, 'PREVYEAR', PrevYear), domain, bool) {
+			attribute<uint32> 	nrules (domain):= ='add('+asItemList(strlen(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name) > 0 ? Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name+'[uint32]' : '')+')',
+				StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_rulecount_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+			attribute<uint32> 	cmax (domain):= ='argmax_ifdefined('+asItemList(strlen(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name) > 0 ? Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name+'[uint32]' : '')+')',
+				StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_maxrule_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		}
+		
 		//attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		//attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		//attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
@@ -243,6 +261,7 @@ container Templates
 		attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
+		
 	}
 	// glm2 estimated with a probit link (logit implemented)
 	Template Suitability_T_GLM2 {

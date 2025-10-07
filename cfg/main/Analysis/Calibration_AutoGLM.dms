@@ -140,8 +140,11 @@ container Calibration : using = "geography;SourceData/RegionalUnits;SourceData;C
 		container Read_Cubist:= for_each_ne(Continents_InCalib/name, 'Templates/ReadCubistModel('+quote('%ProjDir%/Data/Calibration/cubist_'+Continents_InCalib/name+'_'+ModelParameters/Calibration_filedate+'.csv')+')') {
 			unit<uint8> Continental_models:= Classifications/Continents  {
 				attribute<string> ModelsList:= ='union_data(., '+refs+')';
+				attribute<string> RulesList:= ='union_data(., '+rules+')';
 				parameter<string> refs:= asitemlist(Classifications/Continents/name+'/rules/exec_param');
+				parameter<string> rules:= asitemlist(Classifications/Continents/name+'/rules/exec_rules');
 				parameter<string> exec_param:= 'add('+asitemlist('(float32(domain/Continent_rel == '+string(id(.))+'b) * '+ModelsList+')')+')';
+				parameter<string> exec_rules:= 'add('+asitemlist('(float32(domain/Continent_rel == '+string(id(.))+'b) * '+RulesList+')')+')';
 			}
 		}
 		
