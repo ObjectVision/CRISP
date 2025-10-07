@@ -205,7 +205,7 @@ container Templates
 		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
 		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
 				
-		attribute<Suit>      Prob               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(Read_Calc[CompactedDomain/org_rel], -100[suit])' : 'MakeDefined(Write_Calc[CompactedDomain/org_rel], -100[suit])';
+		attribute<Suit>      Prob               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(max_elem(Read_Calc[CompactedDomain/org_rel], 0f), -100[suit])' : 'MakeDefined(max_elem(Write_Calc[CompactedDomain/org_rel], 0f), -100[suit])';
 		//attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		//attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		//attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);

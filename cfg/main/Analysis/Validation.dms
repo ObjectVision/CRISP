@@ -53,6 +53,7 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 			attribute<float32> et_autoglm:= Allocate_Builtup/Y2010/Disaggregation_Proxy/Expected_increase;
 			attribute<float32> proxy_autoglm:= Allocate_Builtup/Y2010/Disaggregation_Proxy/FinalProb;
 			attribute<float32> suit_glm2:= Suitability_GLM2/Y2010/prob;
+			attribute<float32> suit_beta:= Suitability_beta/Y2010/prob;
 			attribute<float32> suit_cubist:= Suitability_cubist/Y2010/prob;
 			
 		}
