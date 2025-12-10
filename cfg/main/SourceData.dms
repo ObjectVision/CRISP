@@ -7,7 +7,14 @@ container SourceData : using = "geography;units"
 		, StorageType = "gdal.vect"
 		, StorageReadOnly = "true"
 		{
-			unit<uint32> FA_data;
+			unit<uint32> FA_data 
+			{
+				attribute<uint32> UNIT_ID;
+				attribute<string> CNTRY_ISOALPHA_FAoriginal;
+				attribute<string> CNTRY_ISOALPHA_UN;
+				attribute<string> CNTRY_ISO3_UN;
+				attribute<string> NAME;
+			}
 			unit<uint32> BU_estimates
 			{
 				attribute<FunctionalAreas_all> FunctionalArea_all_rel := rlookup(uint32(UNIT_ID), uint32(FunctionalAreas_all/FAID));

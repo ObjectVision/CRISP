@@ -183,9 +183,15 @@ container RegionalUnits
 		// attribute<.>                      per_CompactedDomain (CompactedDomain) := per_domain[CompactedDomain/domain_rel];
 		attribute<bool>                   IsStudyArea_domain           (domain) := IsDefined(per_domain) && IsDefined(CurrentProjection/per_domain);
 		attribute<bool>                   IsStudyArea                           := modus(IsStudyArea_domain, per_domain);
-		//attribute<string>                 Continent                             := rjoin(country, set_countries/zoneid, set_countries/continent);
-		//attribute<set_countries>          Country_rel                           := rlookup(country, set_countries/zoneid);
+		attribute<string>                 Continent                             := rjoin(int_ISO, set_countries/zoneid, set_countries/continent);
+		attribute<set_countries>          Country_rel                           := rlookup(int_ISO, set_countries/zoneid);
+		attribute<string>				  Country:= int_ISO;
 		attribute<uint32> 				 faid:= uint32(gridval);
+		attribute<string>				 int_ISO;
+		//attribute<string>				 int_ISO:= rjoin(faid, /sourcedata/Claims/Read_CSV/FA_temp/UNIT_ID[uint32], /sourcedata/Claims/Read_CSV/FA_temp/CNTRY_ISOALPHA_FAoriginal),  // needed once to store country information.
+		//	storagename = "='%ToBURPDataDir%/Regions/fas_combined_'+/ModelParameters/FunctionalAreas_filedate+'_54009.dbf'";
+		//attribute<string>				 Country_ISO:= rjoin(faid, /sourcedata/Claims/Read_CSV/FA_temp/UNIT_ID[uint32], /sourcedata/Claims/Read_CSV/FA_temp/CNTRY_ISOALPHA_UN),  // needed once to store country information.
+		//	storagename = "='%ToBURPDataDir%/Regions/fas_combined_'+/ModelParameters/FunctionalAreas_filedate+'_54009.dbf'";
 	}
 	
 	unit<uint32> FunctionalAreas := select_with_org_rel(FunctionalAreas_all/IsStudyArea)
@@ -220,13 +226,13 @@ container RegionalUnits
 	unit<uint32> UN_countries:= =UN_units/check_countries_UN_file ? 'UN_units/Countries_UN' : 'World';
 	unit<uint32> UN_intermediate_regions:= =UN_units/check_regions_UN_file ? 'UN_units/UN_intermediate_regions' : 'World';
 	
-	unit<uint32> set_countries: nrofrows = 240 
+	unit<uint32> set_countries: nrofrows = 239 
 	{
 		attribute<string>          ZoneId          := inMatrix/data[(id(.)*3+0)[inMatrix]];
 		attribute<string>          Label           := inMatrix/data[(id(.)*3+1)[inMatrix]];
 		attribute<string>          Continent       := inMatrix/data[(id(.)*3+2)[inMatrix]];
-		attribute<LatLong_base>    Geometry_LL (poly) := bp_union_polygon(FunctionalAreas_all/geometry_LL[LatLong_base_ip], FunctionalAreas_all/Country_rel)[LatLong_base];
-		attribute<Mollweide_base>  Geometry_MW (poly) := bp_union_polygon(FunctionalAreas_all/geometry_MW[Mollweide_base_ip], FunctionalAreas_all/Country_rel)[Mollweide_base];
+		attribute<LatLong_base>    Geometry_LL (poly) := geos_union_polygon(FunctionalAreas_all/geometry_LL, FunctionalAreas_all/Country_rel)[LatLong_base];
+		attribute<Mollweide_base>  Geometry_MW (poly) := geos_union_polygon(FunctionalAreas_all/geometry_MW, FunctionalAreas_all/Country_rel)[Mollweide_base];
 		
 		unit<uint32> inMatrix:= range(uint32, 0, #.*3) 
 		{
@@ -361,7 +367,6 @@ container RegionalUnits
 			'LUX',	'Luxembourg',	'Europe',
 			'LVA',	'Latvia',	'Europe',
 			'MAC',	'Macau',	'Asia',
-			'GLP',	'Guadeloupe',	'North_America',
 			'MAF',	'Saint Martin (FR)', 'North_America',
 			'MAR',	'Morocco',	'Africa',
 			'MCO',	'Monaco',	'Europe',

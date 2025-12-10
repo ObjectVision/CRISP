@@ -136,6 +136,9 @@ container Templates
 				parameter<string> exec_param:= '('+aslist(exec_table, ' + ')+')'; 
 				parameter<string> exec_rules:=  '('+aslist(exec_rules_table, ' + ')+')'; 
 				
+				container variable_occurence_rules:= for_each_nedv(Export_DataForCalibration/Field/name, 'uint32(strcount(uppercase(ruledef), '+quote(uppercase(Export_DataForCalibration/Field/name))+') > 0)', rules, uint32);
+				container variable_occurence_eval:= for_each_nedv(Export_DataForCalibration/Field/name, 'uint32(strcount(uppercase(eval), '+quote(uppercase(Export_DataForCalibration/Field/name))+') > 0)', rules, uint32);
+				
 			}
 		}
 	template WriteTable32ToCSV
@@ -208,20 +211,23 @@ container Templates
 		parameter<string> in_rules:= Continents/exec_rules;
 		parameter<string> thisyear_rules:= replace(in_rules, 'PREVYEAR', PrevYear);
 		
-		attribute<Suit> Calc (domain) := =thisyear_exec; 
-		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<Suit> rules_Calc (domain) := =thisyear_exec; 
+		attribute<Suit> Calc (domain):= rules_Calc / max_elem(1, rule_eval/nrules)[Suit];
+		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
 		
 		attribute<float32> Rules (domain):= =thisyear_rules;
-		attribute<float32> Write_Rules (domain) := Rules, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<float32> Write_Rules (domain) := Rules, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 		
 		attribute<Suit>      Prob               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(max_elem(Read_Calc[CompactedDomain/org_rel], 0f), -100[suit])' : 'MakeDefined(max_elem(Write_Calc[CompactedDomain/org_rel], 0f), -100[suit])';
+		attribute<float32>	 FinalProb			(CompactedDomain) := max_elem(Prob - CurrBuState/BuiltUp_Total_Share, 0f);
+		attribute<Suit>      BuiltUp            (CompactedDomain) := FinalProb;
 		
 		container rule_eval:= for_each_nedv(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name, replace(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/sanitized_ruledef, 'PREVYEAR', PrevYear), domain, bool) {
 			attribute<uint32> 	nrules (domain):= ='add('+asItemList(strlen(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name) > 0 ? Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name+'[uint32]' : '')+')',
-				StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_rulecount_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+				StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_rulecount_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 			attribute<uint32> 	cmax (domain):= ='argmax_ifdefined('+asItemList(strlen(Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name) > 0 ? Calibration/ReadCoffecients/Read_Cubist/North_America/rules/name+'[uint32]' : '')+')',
-				StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_maxrule_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+				StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_maxrule_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 		}
 		
 		//attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
@@ -254,13 +260,14 @@ container Templates
 										(Physical/Natural_Hazards/Landslide/LS_risk[float32]                                                          * Coeffs/LandSlideProne_ARUP) + 
 										(recollect_by_cond(domain/IsCompactedDomain, CurrBuState/BuiltUp_Total_Share)[float32]					  	  * Coeffs/CurrBuState)+									
 										Coeffs/Intercept'; 
-		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_beta'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_beta'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_beta'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
 				
 		attribute<Suit>      BuiltUp               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(Read_Calc[CompactedDomain/org_rel], -100[suit])' : 'MakeDefined(Write_Calc[CompactedDomain/org_rel], -100[suit])';
 		attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
+		attribute<float32>	 FinalProb			   (CompactedDomain) := max_elem(Prob - CurrBuState/BuiltUp_Total_Share, 0f);
 		
 	}
 	// glm2 estimated with a probit link (logit implemented)
@@ -290,13 +297,14 @@ container Templates
 										(Physical/Natural_Hazards/Landslide/LS_risk[float32]                                                          * Coeffs/LandSlideProne_ARUP) + 
 										(recollect_by_cond(domain/IsCompactedDomain, CurrBuState/BuiltUp_Total_Share)[float32]					  	  * Coeffs/CurrBuState)+									
 										Coeffs/Intercept'; 
-		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_GLM2'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_GLM2'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_GLM2'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
 				
 		attribute<Suit>      BuiltUp               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(Read_Calc[CompactedDomain/org_rel], -100[suit])' : 'MakeDefined(Write_Calc[CompactedDomain/org_rel], -100[suit])';
 		attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
+		attribute<float32>	 FinalProb			   (CompactedDomain) := max_elem(Prob - CurrBuState/BuiltUp_Total_Share, 0f);
 	}
 	
 	Template Suitability_T_GLM {
@@ -304,6 +312,7 @@ container Templates
 		parameter<string> PrevYear;
 		container CurrBuState;
 		container CurrPopState;
+		attribute<BuiltUpKm2> Claim (ClaimRegion);
 		container Calculate_GridDistances;
 		
 		
@@ -325,12 +334,31 @@ container Templates
 																(Physical/Natural_Hazards/Earthquake/Earthquakes_Modified_Mercalli_Intensity/ReadData[float32]                * AutoGLM_Coeffs/Earthquakes_MMI_Index) + 
 																(Physical/Natural_Hazards/Landslide/LS_risk[float32]                                                          * AutoGLM_Coeffs/Landslide_Prone) + 
 																AutoGLM_Coeffs/Intercept'; 
-		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_GLM'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_GLM'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_GLM'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
 				
 		attribute<Suit>      BuiltUp               (CompactedDomain) := =ModelParameters/Use_TempTifFiles ? 'MakeDefined(Read_Calc[CompactedDomain/org_rel], -100[suit])' : 'MakeDefined(Write_Calc[CompactedDomain/org_rel], -100[suit])';
 		attribute<Suit>      CappedBuiltUp         (CompactedDomain) := min_elem(BuiltUp, 80[suit]);
 		attribute<Suit>      expCappedBuiltUp      (CompactedDomain) := exp(CappedBuiltUp);
 		attribute<float32>   Prob                  (CompactedDomain) := expCappedBuiltUp / (1f+ expCappedBuiltUp);
+		
+		container Claims
+		{
+			attribute<BuiltUpKm2>        Builtup_Residential_Area           (ClaimRegion) := Claim;
+			attribute<float32>           Available_Space                    (ClaimRegion) := 1f - (Builtup_Residential_Area / ClaimRegion/cd_area * 1[km2]);
+		}
+		
+		// now establish rescaling, ETs.
+		attribute<float32>   BuiltUp_Share         (CompactedDomain) := CurrBuState/BuiltUp_Total_Area / CompactedDomain/area;
+		attribute<AllShares> BuiltUp_Share_Perc    (CompactedDomain) := value(BuiltUp_Share * 100f, Classifications/AllShares);
+		
+		attribute<Shares_Per_Continent> BuiltUp_Share_Perc_Continent (CompactedDomain):= value(BuiltUp_Share_Perc[uint32] + CompactedDomain/Continent_add_mup, Classifications/Shares_Per_Continent);
+		attribute<float32>	 Available_Space_Weight (CompactedDomain):= (BuiltUp_Share_Perc[float32] / (Claims/Available_Space[CompactedDomain/FunctionalAreas_rel] / 1[BuiltUpKm2])^2f) - BuiltUp_Share_Perc[float32];
+		attribute<float32>   Expected_increase     (CompactedDomain) := BuiltUp_Share_Perc_Continent->Moving_up_probability;
+		attribute<float32>   Dynamic_Expected_increase (CompactedDomain):= (1f + Available_Space_Weight) * Expected_increase;
+		
+		attribute<Float32>   AvgProb                     (AllShares) := mean(Prob, BuiltUp_Share_Perc);
+		attribute<float32>   ProbBalanceFactor     (CompactedDomain) := 1f / (AvgProb[BuiltUp_Share_Perc]); //median(0f, 1f - 2f*BuiltUp_Share, 1f);
+		attribute<float32>   FinalProb             (CompactedDomain) := Prob * Dynamic_Expected_increase * ProbBalanceFactor;
 	}
 }

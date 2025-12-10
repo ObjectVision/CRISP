@@ -50,7 +50,7 @@ Template Allocate_Builtup_T
 	
 	// suitability computations merit integration -> right now, the only difference between the population and built-up definition is in the reference to prior population. 
 	// maybe best to 
-	container Disaggregation_Proxy
+	/*container Disaggregation_Proxy
 	{
 		attribute<float32>   BuiltUp_Share         (CompactedDomain) := CurrState/BuiltUp_Total_Area / CompactedDomain/area;
 		attribute<AllShares> BuiltUp_Share_Perc    (CompactedDomain) := value(BuiltUp_Share * 100f, Classifications/AllShares);
@@ -70,7 +70,7 @@ Template Allocate_Builtup_T
 			attribute<float32> ET_x_suit(domain) := Loc_suit * ET, StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/ET_x_suit_'+ModelParameters/StartYear+'.tif'";
 			attribute<float32> Def_val  (domain) := recollect_by_cond(domain/IsCompactedDomain, FinalProb), StorageName = "='%LocalDataProjDir%/Results/adhoc_suit/'+ModelParameters/StudyArea+'/Balanced_ET_x_suit_'+ModelParameters/StartYear+'.tif'";
 		}
-	}
+	}*/
 	
 	container Claims
 	{
@@ -89,7 +89,7 @@ Template Allocate_Builtup_T
 		attribute<BuiltUpKm2> Weight                   (CompactedDomain) := max_elem((LocalMaxima/MaxAllowed_Builtup_Residential_Share - CurrState/BuiltUp_Residential_Share) * CompactedDomain/area / 1[km2] * 1[BuiltUpKm2], 0[BuiltUpKm2]);
 		
 		attribute<bool>       FeasibilityCheck             (ClaimRegion) := sum(Weight, region_rel) >= Delta_Claim;
-		attribute<float32>    InitialProb              (CompactedDomain) := Disaggregation_Proxy/FinalProb;// * Weight;
+		attribute<float32>    InitialProb              (CompactedDomain) := Suitability/FinalProb;// * Weight;
 		attribute<BuiltUpKm2> new_BuiltUp_area_raw     (CompactedDomain) := scalesum(InitialProb, Region_rel, Delta_Claim);
 		attribute<BuiltUpKm2> new_BuiltUp_area         (CompactedDomain) := new_BuiltUp_area_raw < ModelParameters/Truncation_newBU ? 0[BuiltUpKm2] : new_BuiltUp_area_raw;
 		

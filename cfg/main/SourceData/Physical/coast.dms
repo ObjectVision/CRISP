@@ -14,11 +14,11 @@ container Coast
 		
 		attribute<CurrentProjection_base> Geometry           (poly) := =ModelParameters/domain_EPSG == '54009' ? 'Geometry_MW' : 'Geometry_LL';
 		
-		attribute<bool>              Write_per_subgrid (domain_sub) := IsDefined(poly2grid(Geometry[CurrentProjection], domain_sub)), StorageName = "= '%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/IsLandMass_subdomain_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<bool>              Write_per_subgrid (domain_sub) := IsDefined(poly2grid(Geometry[CurrentProjection], domain_sub)), StorageName = "= '%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/IsLandMass_subdomain_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
 		attribute<bool>              Read_per_subgrid  (domain_sub) : StorageName = "=PropValue(Write_per_subgrid, 'StorageName')", StorageReadOnly = "true";
 		parameter<bool> 			 check_subgrid_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/IsLandMass_subdomain_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
 		
-		attribute<bool>              Write_per_grid        (domain) := IsDefined(poly2grid(Geometry[CurrentProjection], domain)), StorageName = "= '%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/IsLandMass_domain_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<bool>              Write_per_grid        (domain) := IsDefined(poly2grid(Geometry[CurrentProjection], domain)), StorageName = "= '%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/IsLandMass_domain_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
 		attribute<bool>              Read_per_grid         (domain) : StorageName = "=PropValue(Write_per_grid, 'StorageName')", StorageReadOnly = "true";
 		parameter<bool> 			 do_store_files:= True, ExplicitSuppliers = "Write_per_grid;Write_per_subgrid;";
 		parameter<bool> 			 check_grid_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/IsLandMass_domain_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
@@ -55,7 +55,7 @@ container Coast
 	container Location2Coast   := Templates/GetDistance_T(Coastline/Union_Outer_w_LargeLakes);
 	
 	attribute<float32> Location2Coast_sqr_domain_export    (domain) := Location2Coast/Location2_sqr_domain_export
-	, StorageName = "='%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/Location2Coast_m_sqr_'+ModelParameters/domain_EPSG+'.tif'";
+	, StorageName = "='%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/Location2Coast_m_sqr_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
 
 	unit<ipoint> Location2Coast_m_sqr
 	//:	StorageName     = "='%ToBURPDataDir%/physical/Coast/'+ModelParameters/StudyArea+'/Location2Coast_m_sqr_'+ModelParameters/domain_EPSG+'.tif'"
