@@ -57,6 +57,16 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 			attribute<float32> suit_cubist:= Suitability_cubist/Y2010/prob;
 			
 		}
+		attribute<float32> exp_et_autoglm (domain):= suit_exp/et_autoglm[CompactedDomain/BaseGrid], 
+			storagename = "='%LocalDataProjDir%/Temp/exp/'+ModelParameters/StudyArea+'/ET_x_Suitability_GLM'+ModelParameters/Calibration_filedate+'_Y2010_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<float32> dbu (domain):= (suit_exp/buperctot20 - suit_exp/buperctot00)[CompactedDomain/BaseGrid], 
+			storagename = "='%LocalDataProjDir%/Temp/exp/'+ModelParameters/StudyArea+'/dBU_Y2000_Y2020_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<float32> exp_glm2 (domain):= (suit_exp/suit_glm2 - suit_exp/buperctot00)[CompactedDomain/BaseGrid],
+			storagename = "='%LocalDataProjDir%/Temp/exp/'+ModelParameters/StudyArea+'/suit_glm2_minbu00_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<float32> exp_beta (domain):= (suit_exp/suit_beta - suit_exp/buperctot00)[CompactedDomain/BaseGrid],
+			storagename = "='%LocalDataProjDir%/Temp/exp/'+ModelParameters/StudyArea+'/suit_beta_minbu00_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<float32> exp_cubist (domain):= (suit_exp/suit_cubist - suit_exp/buperctot00)[CompactedDomain/BaseGrid],
+			storagename = "='%LocalDataProjDir%/Temp/exp/'+ModelParameters/StudyArea+'/suit_cubist_minbu00_'+ModelParameters/domain_EPSG+'.tif'";	
 	}
 	container Suitability_AutoGLM := for_each_ne(ValidationYears/name, 'Templates/Suitability_T_GLM('
 			+quote(ValidationYears/name)+

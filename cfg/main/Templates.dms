@@ -208,9 +208,10 @@ container Templates
 		parameter<string> in_rules:= Continents/exec_rules;
 		parameter<string> thisyear_rules:= replace(in_rules, 'PREVYEAR', PrevYear);
 		
-		attribute<Suit> Calc (domain) := =thisyear_exec; 
-		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
-		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
+		attribute<Suit> Prep_Calc (domain) := =thisyear_exec; 
+		attribute<Suit> Calc (domain):= Prep_Calc / max_elem(1, rule_eval/nrules)[Suit];
+		attribute<Suit> Write_Calc (domain) := Calc, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_meaned_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
+		attribute<Suit> Read_Calc  (domain) : StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_meaned_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'", StorageReadOnly = "True";
 		
 		attribute<float32> Rules (domain):= =thisyear_rules;
 		attribute<float32> Write_Rules (domain) := Rules, StorageName = "='%LocalDataProjDir%/Temp/'+ModelParameters/StudyArea+'/Suitability_cubist_ruleset_'+ModelParameters/Calibration_filedate+'_'+ThisYear+'_'+ModelParameters/domain_EPSG+'.tif'";
