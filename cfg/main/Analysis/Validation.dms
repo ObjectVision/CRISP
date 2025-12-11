@@ -220,10 +220,56 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 			, ModelParameters/Use_TempTifFiles 
 				? 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ValidationYears/name+'/ReadTypologyK)' 
 				: 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ValidationYears/name+'/Typology_Domain)'
-		) {container Y2000 := /Preprocessing/GridDistances/Y2000;}
-			
+		) {container Y2000 := /Preprocessing/GridDistances/Y2000;}	
 	}
-	
+	container prevbustate {
+		container Suitability:= for_each_ne(ValidationYears/name, 'Templates/Suitability_T_PriorBUstate('
+			+quote(ValidationYears/name)+
+			','+quote(ValidationYears/prev_name)+ 
+			', Allocate_Builtup/'+ValidationYears/prevStateName+
+			', Allocate_Population/'+ValidationYears/prevStateName+')'	
+		);
+		container Allocate_Builtup := 
+			for_each_ne(
+				ValidationYears/name 
+				,	'Future/Allocate_Builtup_T('
+						+quote(ValidationYears/name)+                              // (0) Year
+						','+quote(ValidationYears/prev_name)+                      // (1) PrevYear
+						', Allocate_Builtup/'+ValidationYears/prevStateName+       // (2) State builtup of previous period
+						', Suitability/'+ValidationYears/name+    				   // (3) Suitability container
+						', Claim/Builtup/'+ValidationYears/name+                   // (4) Expected amount of builtup per region in km2
+					')'
+			) 
+		{
+			container InitialState:= Validation/InitialState;
+			container Y2020_onestep:= Future/Allocate_Builtup_T('Y2020','Y2000', Allocate_Builtup/InitialState , Suitability/Y2010 , Claim/Builtup/Y2020);
+		}
+		container Allocate_Population := 
+			for_each_ne(
+				ValidationYears/name 
+				,	'Future/Allocate_Population_T('
+						+quote(ValidationYears/name)+								// (0) Year
+						','+quote(ValidationYears/prev_name)+						// (1) PrevYear
+						','+ValidationYears/prevStateName+							// (2) State population of previous period
+						', Allocate_Builtup/'+ValidationYears/name+'/CurrState'	    // (3) State builtup of previous period
+						', Allocate_Builtup/'+ValidationYears/name+'/NewState'		// (4) State builtup of current period
+						', Suitability/'+ValidationYears/name+    				    // (5) Suitability container
+						', Claim/Population/'+ValidationYears/name+					// (6) Expected amount of population per region
+					')'
+			) 
+		{
+			container InitialState:= Validation/InitialState;
+			container Y2020_onestep:= Future/Allocate_Population_T('Y2020','Y2000',InitialState, Allocate_Builtup/Y2020_onestep/CurrState, Allocate_Builtup/Y2020_onestep/NewState, Suitability/Y2010, Claim/Population/Y2010);
+		}
+		container Store_Results:= T_Store_Results('vali_prevbustate_');
+
+		container Calculate_GridDistances := for_each_ne(
+			ValidationYears/name
+			, ModelParameters/Use_TempTifFiles 
+				? 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ValidationYears/name+'/ReadTypologyK)' 
+				: 'Preprocessing/Calculate_GridDistances/T_AllVariants_Instantiation(Store_Results/DegreesOfUrbanisation/'+ValidationYears/name+'/Typology_Domain)'
+		) {container Y2000 := /Preprocessing/GridDistances/Y2000;}	
+	}
 	Template T_Store_Results {
 		parameter<string> file_addition;
 		container DegreesOfUrbanisation :=

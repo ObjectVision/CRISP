@@ -307,6 +307,26 @@ container Templates
 		attribute<float32>	 FinalProb			   (CompactedDomain) := max_elem(Prob - CurrBuState/BuiltUp_Total_Share, 0f);
 	}
 	
+	Template Suitability_T_PriorBUstate {
+		parameter<string> ThisYear;
+		parameter<string> PrevYear;
+		container CurrBuState;
+		container CurrPopState;
+		attribute<BuiltUpKm2> Claim (ClaimRegion);
+		
+		unit<wpoint> domain:= Geography/Domain;
+		
+		attribute<float32>   BuiltUp               (CompactedDomain) := CurrBuState/BuiltUp_Total_Area / CompactedDomain/area;
+		
+		container Claims
+		{
+			attribute<BuiltUpKm2>        Builtup_Residential_Area           (ClaimRegion) := Claim;
+			attribute<float32>           Available_Space                    (ClaimRegion) := 1f - (Builtup_Residential_Area / ClaimRegion/cd_area * 1[km2]);
+		}
+		
+		// now establish rescaling, ETs.
+		attribute<float32>   FinalProb             (CompactedDomain) := BuiltUp;
+	}
 	Template Suitability_T_GLM {
 		parameter<string> ThisYear;
 		parameter<string> PrevYear;
