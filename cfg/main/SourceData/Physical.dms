@@ -155,14 +155,14 @@ container Physical : using = "geography;classifications"
 			attribute<CurrentProjection> Geometry_        (poly) := =ModelParameters/domain_EPSG == '54009' ? 'Geometry_MW' : 'Geometry';
 			
 			attribute<m2>                Area                    := area(geometry_mer, float64)[m2];
-			attribute<bool>              Write_per_grid (domain) := IsDefined(poly2grid(Geometry_, domain)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_'+ModelParameters/domain_EPSG+'.tif'";
-			attribute<bool>              Read_per_grid  (domain) : StorageName = "=PropValue(Write_per_grid, 'StorageName')", StorageReadOnly = "true";
+			attribute<bool>              Write_per_grid (domain) := IsDefined(poly2grid(Geometry_, domain)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
+			attribute<bool>              Read_per_grid  (domain) : StorageName = "=PropValue(Write_per_grid, 'StorageName')", StorageReadOnly = "true", storagetype = "gdal.grid";
 			parameter<bool> 			 check_grid_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
 			
 			parameter<bool> 			 do_store_files:= True, ExplicitSuppliers = "Write_per_grid;Write_per_subgrid;";
 			
-			attribute<bool>              Write_per_subgrid (domain_sub) := IsDefined(poly2grid(Geometry_, domain_sub)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_subdomain_'+ModelParameters/domain_EPSG+'.tif'";
-			attribute<bool>              Read_per_subgrid  (domain_sub) : StorageName = "=PropValue(Write_per_subgrid, 'StorageName')", StorageReadOnly = "true";
+			attribute<bool>              Write_per_subgrid (domain_sub) := IsDefined(poly2grid(Geometry_, domain_sub)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_subdomain_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
+			attribute<bool>              Read_per_subgrid  (domain_sub) : StorageName = "=PropValue(Write_per_subgrid, 'StorageName')", StorageReadOnly = "true", storagetype = "gdal.grid";
 			parameter<bool> 			 check_subgrid_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_subdomain_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
 		}
 
@@ -183,7 +183,7 @@ container Physical : using = "geography;classifications"
 			attribute<uint32>  Fraction_Water0        (domain) := sum(IsWater[uint32], domain_sub/domain_rel);
 			attribute<uint32>  Fraction_Water         (domain) := ((Fraction_Water0[float32] / ((ModelParameters/WGS_Gridsize / ModelParameters/WGS_Subgridsize)^2d)[float32]) * 100f)[uint32];
 			
-			attribute<bool>	   Write_HasLand          (domain) := Fraction_Water0 < pcount(domain_sub/domain_rel)[uint32], storagename = "= '%ToBURPDataDir%/Physical/water/'+ModelParameters/StudyArea+'/HasLand_'+ModelParameters/domain_EPSG+'.tif'";
+			attribute<bool>	   Write_HasLand          (domain) := Fraction_Water0 < pcount(domain_sub/domain_rel)[uint32], storagename = "= '%ToBURPDataDir%/Physical/water/'+ModelParameters/StudyArea+'/HasLand_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
 			attribute<bool>    Read_HasLand           (domain) : StorageName = "= PropValue(Write_HasLand, 'storagename')", StorageType = "gdal.grid", StorageReadOnly = "True";
 			
 			parameter<bool> check_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/Physical/water/'+ModelParameters/StudyArea+'/HasLand_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';

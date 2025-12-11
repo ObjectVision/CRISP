@@ -8,7 +8,17 @@ container Builtup : using = "units;classifications;sourcedata/regionalunits"
 			, '%ToBURPDataDir%/Builtup/GHS_BUILT_S_E'+string(GHS_years/year)+'_GLOBE_R2023A_'+ModelParameters/domain_EPSG+'_'+ModelParameters/gridsize+'_V1_0.tif'
 			,'gdal.grid'
 		);
+	// adhoc analysis of values
+	unit<ipoint> bu_2020: storagename = "F:/SourceData/2BURP/Builtup/GHS_BUILT_S_E2020_GLOBE_R2023A_54009_1000_V1_0.tif", dialogdata = "Mollweide_base", storagereadonly = "true", storagetype = "gdal.grid" {
+		attribute<uint32> GridData;
+		attribute<bool>   above_60:= perc_class > 59[Classifications/percentages];
 		
+		attribute<Classifications/percentages> perc_class:= classify(GridData[float32]  / 10000f, float32(id(Classifications/percentages)));
+		
+		attribute<uint64> ncells (Classifications/percentages):= pcount(perc_class);
+		parameter<uint32> nzero:= sum((GridData = 0 && isdefined(perc_class))[uint32]);
+	}
+	
 	container Total :=
 		for_each_neidv(
 			GHS_years/name

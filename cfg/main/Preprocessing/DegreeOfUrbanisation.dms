@@ -382,7 +382,7 @@ Container Calculate_DegreeOfUrbanisation : using = "Geography;SourceData;"
 		attribute<TypologyK>       Typology                                 (CompactedDomain) := Very_Low_Density_Grid_Cell/Typology;
 		attribute<TypologyK>       Typology_Domain                                   (domain) := recollect_by_cond(domain/IsCompactedDomain, Typology); // seems redundant, added because of the need to have this result in the grid distance access computations
 		
-		attribute<uint8>           StoreTypology                                     (domain) := TypologyK/EK[Typology_Domain], StorageName = "=Export_name";
+		attribute<uint8>           StoreTypology                                     (domain) := TypologyK/EK[Typology_Domain], StorageName = "=Export_name", storagetype="gdalwrite.grid";
 		attribute<uint8>           ReadTypology                                      (domain) : StorageName = "=Export_name", StorageReadOnly = "true";
 		parameter<bool> 		   check_file:= ='strlen('+quote(ExistingFile('', Export_name))+') > 0';
 		attribute<TypologyK>       ReadTypologyK                                     (domain) := invert(TypologyK/EK)[ReadTypology];
