@@ -316,8 +316,8 @@ container Templates
 		
 		unit<wpoint> domain:= Geography/Domain;
 		
-		attribute<float32>   BuiltUp               (CompactedDomain) := CurrBuState/BuiltUp_Total_Area / CompactedDomain/area;
-		
+		attribute<float32>   BuiltUp               	(CompactedDomain) := CurrBuState/BuiltUp_Total_Area / CompactedDomain/area;
+		attribute<float32>	 Prob					(CompactedDomain) := BuiltUp;
 		container Claims
 		{
 			attribute<BuiltUpKm2>        Builtup_Residential_Area           (ClaimRegion) := Claim;
