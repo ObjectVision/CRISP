@@ -34,7 +34,7 @@ container ModelParameters : using = "units;sourcedata"
 	parameter<Person>                    Pop_maxmax_saturation                               := 1000000[Person];
 	
 	//277, area with excessive pop / bu in Indonesia in 2030
-	unit<uint32> ignore_Check_for_enough_suitable_locations : nrofrows = 2 {attribute<uint32> org_rels : [277, 844];} //=  const(null_u, .); parameter<bool> Ignore_all:= false;} // [792, 793, 730]; //=  const(null_u, .);} 792: Congo, 2030; 793: Congo, 2030; 730: Chad, 2030
+	unit<uint32> ignore_Check_for_enough_suitable_locations : nrofrows = 3 {attribute<uint32> org_rels : [277, 844, 799];} //=  const(null_u, .); parameter<bool> Ignore_all:= false;} // [792, 793, 730]; //=  const(null_u, .);} 792: Congo, 2030; 793: Congo, 2030; 730: Chad, 2030
 	
 	unit<uint32> ignore_Check_for_enough_drawn_population : nrofrows = 0
 	{attribute<uint32> org_rels:= const(null_u, .);}

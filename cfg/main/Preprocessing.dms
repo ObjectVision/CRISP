@@ -8,8 +8,8 @@ container Preprocessing : using = "Geography;Units;SourceData;SourceData/Regiona
 			, BuiltUpKm2
 		)
 	{
-		attribute<BuiltUpKm2> Y2010 (FunctionalAreas) := sum(convert(SourceData/Builtup/Total/Y2010, km2) / 1[km2] * 1[BuiltUpKm2], FunctionalAreas/per_domain);
-		attribute<BuiltUpKm2> Y2020 (FunctionalAreas) := sum(convert(SourceData/Builtup/Total/Y2020, km2) / 1[km2] * 1[BuiltUpKm2], FunctionalAreas/per_domain);
+		attribute<BuiltUpKm2> Y2010 (FunctionalAreas) := sum(convert(SourceData/Builtup/Residential/Y2010, km2) / 1[km2] * 1[BuiltUpKm2], FunctionalAreas/per_domain);
+		attribute<BuiltUpKm2> Y2020 (FunctionalAreas) := sum(convert(SourceData/Builtup/Residential/Y2020, km2) / 1[km2] * 1[BuiltUpKm2], FunctionalAreas/per_domain);
 	}
 	
 	container Claims_Population := 

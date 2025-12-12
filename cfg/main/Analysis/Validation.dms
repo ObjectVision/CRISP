@@ -316,12 +316,21 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 		attribute<float32> Modelled_Builtup_GLM2_os		(CompactedDomain) := GLM2/Store_Results/ModelResults_readonly/bu_Y2020_onestep[CompactedDomain/org_rel];
 		attribute<float32> Modelled_Builtup_cubist	  	(CompactedDomain) := cubist/Store_Results/ModelResults_readonly/bu_Y2020[CompactedDomain/org_rel];
 		attribute<float32> Modelled_Builtup_cubist_os	(CompactedDomain) := cubist/Store_Results/ModelResults_readonly/bu_Y2020_onestep[CompactedDomain/org_rel];
+		attribute<float32> Modelled_Builtup_prevbu	  	(CompactedDomain) := prevbustate/Store_Results/ModelResults_readonly/bu_Y2020[CompactedDomain/org_rel];
+		attribute<float32> Modelled_Builtup_prevbu_os	(CompactedDomain) := prevbustate/Store_Results/ModelResults_readonly/bu_Y2020_onestep[CompactedDomain/org_rel];
 		
 		//abs errors
-		attribute<float32>    ObservedMINUSModelled_BU_AutoGLM  (CompactedDomain) := abs(Observed_Builtup - Modelled_Builtup_AutoGLM);
-		attribute<float32>    ObservedMINUSModelled_BU_Beta  	(CompactedDomain) := abs(Observed_Builtup - Modelled_Builtup_Beta);
-		attribute<float32>    ObservedMINUSModelled_BU_GLM2  	(CompactedDomain) := abs(Observed_Builtup - Modelled_Builtup_GLM2);
-		attribute<float32>    ObservedMINUSModelled_BU_cubist  	(CompactedDomain) := abs(Observed_Builtup - Modelled_Builtup_cubist);
+		attribute<float32>    ObservedMINUSModelled_BU_AutoGLM  	(CompactedDomain) := (Modelled_Builtup_AutoGLM - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_AutoGLM_os  	(CompactedDomain) := (Modelled_Builtup_AutoGLM_os - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_Beta  		(CompactedDomain) := (Modelled_Builtup_Beta - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_Beta_os  	(CompactedDomain) := (Modelled_Builtup_Beta_os - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_GLM2  		(CompactedDomain) := (Modelled_Builtup_GLM2 - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_GLM2_os  	(CompactedDomain) := (Modelled_Builtup_GLM2_os - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_cubist  		(CompactedDomain) := (Modelled_Builtup_cubist - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_cubist_os  	(CompactedDomain) := (Modelled_Builtup_cubist_os - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_prevbu  		(CompactedDomain) := (Modelled_Builtup_prevbu - Observed_Builtup);
+		attribute<float32>    ObservedMINUSModelled_BU_prevbu_os  	(CompactedDomain) := (Modelled_Builtup_prevbu_os - Observed_Builtup);
+		
 		
 		attribute<Person>     Observed_Population       (CompactedDomain) := ='(SourceData/Population/PerYear/'+ModelYear+'[Person])[CompactedDomain/org_rel]';
 		attribute<Person>     Modelled_Population       (CompactedDomain) := Allocate_Population/NewState/Population;
@@ -334,6 +343,18 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 		
 		attribute<bool>       IsBU_without_Pop          (CompactedDomain) := Modelled_Builtup > 0[BuiltUpKm2] && Modelled_Population == 0[Person];
 		attribute<bool>       HasPop_without_BU         (CompactedDomain) := Modelled_Population > 0[Person] && Modelled_Builtup == 0[BuiltUpKm2];
+		
+		parameter<float32>	  MAPE_AutoGLM:= sum(abs(ObservedMINUSModelled_BU_AutoGLM)) / sum(Observed_Builtup);
+		parameter<float32>	  MAPE_AutoGLM_os:= sum(abs(ObservedMINUSModelled_BU_AutoGLM_os)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_Beta:= sum(abs(ObservedMINUSModelled_BU_Beta)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_Beta_os:= sum(abs(ObservedMINUSModelled_BU_Beta_os)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_GLM2:= sum(abs(ObservedMINUSModelled_BU_GLM2)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_GLM2_os:= sum(abs(ObservedMINUSModelled_BU_GLM2_os)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_cubist:= sum(abs(ObservedMINUSModelled_BU_cubist)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_cubist_os:= sum(abs(ObservedMINUSModelled_BU_cubist_os)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_prevbu:= sum(abs(ObservedMINUSModelled_BU_prevbu)) / sum(Observed_Builtup);
+		parameter<float32>    MAPE_prevbu_os:= sum(abs(ObservedMINUSModelled_BU_prevbu_os)) / sum(Observed_Builtup);
+		
 		
 		unit<uint32> Per_FA := FunctionalAreas 
 		{
