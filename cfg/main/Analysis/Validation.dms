@@ -19,6 +19,14 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 		container Builtup    := Preprocessing/Claims_BuiltUp;
 		container Population := Preprocessing/Claims_Population;
 	}
+	unit<uint32> export:= CompactedDomain {
+		attribute<float32> buperctot00:= Validation/InitialState/BuiltUp_Total_Area;
+		attribute<float32> buperctot20:= Future/InitialState/BuiltUp_Total_Area;
+		attribute<float32> proxy_autoglm:= autoglm/Suitability/Y2010/FinalProb;
+		attribute<float32> suit_beta:= beta/Suitability/Y2010/FinalProb;
+		attribute<float32> suit_glm2:= GLM2/Suitability/Y2010/FinalProb;
+		attribute<float32> suit_cubist:= cubist/Suitability/Y2010/FinalProb;
+	}
 	container AutoGLM {
 		container Suitability:= for_each_ne(ValidationYears/name, 'Templates/Suitability_T_GLM('
 			+quote(ValidationYears/name)+
@@ -355,6 +363,13 @@ container Validation : using = "units;geography;sourcedata/regionalunits;classif
 		parameter<float32>    MAPE_prevbu:= sum(abs(ObservedMINUSModelled_BU_prevbu)) / sum(Observed_Builtup);
 		parameter<float32>    MAPE_prevbu_os:= sum(abs(ObservedMINUSModelled_BU_prevbu_os)) / sum(Observed_Builtup);
 		
+		unit<wpoint> export:= domain {
+			attribute<float32> AutoGLM:= 	ObservedMINUSModelled_BU_AutoGLM[CompactedDomain/BaseGrid], storagename = "= '%LocalDataProjDir%/Results/Validation_export/d_'+ModelParameters/StudyArea+'/Builtup_2020_AutoGLM_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
+			attribute<float32> Beta:= 		ObservedMINUSModelled_BU_Beta[CompactedDomain/BaseGrid], storagename = "= '%LocalDataProjDir%/Results/Validation_export/d_'+ModelParameters/StudyArea+'/Builtup_2020_Beta_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
+			attribute<float32> GLM2:= 		ObservedMINUSModelled_BU_GLM2[CompactedDomain/BaseGrid], storagename = "= '%LocalDataProjDir%/Results/Validation_export/d_'+ModelParameters/StudyArea+'/Builtup_2020_GLM2_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
+			attribute<float32> cubist:= 	ObservedMINUSModelled_BU_cubist[CompactedDomain/BaseGrid], storagename = "= '%LocalDataProjDir%/Results/Validation_export/d_'+ModelParameters/StudyArea+'/Builtup_2020_cubist_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
+			attribute<float32> prevbustate:=ObservedMINUSModelled_BU_prevbu[CompactedDomain/BaseGrid], storagename = "= '%LocalDataProjDir%/Results/Validation_export/d_'+ModelParameters/StudyArea+'/Builtup_2020_prevbustate_'+ModelParameters/domain_EPSG+'.tif'", storagetype = "gdalwrite.grid";
+		}
 		
 		unit<uint32> Per_FA := FunctionalAreas 
 		{
