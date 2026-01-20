@@ -31,6 +31,7 @@ container RegionalUnits
 	, DialogData = "geometry_ll"
 	{
 		attribute<string>                 Label; 
+		attribute<string>                 Label1 := Label == 'Guadeloupe' ? 'Guadeloupe'+string(id(.)) : label; 
 		attribute<string>                 ISO3; 
 		attribute<LatLong_base>           geometry_LL (poly);
 		attribute<Mollweide_base>         Geometry_MW (poly); 
@@ -42,11 +43,11 @@ container RegionalUnits
 		// attribute<mainland>          mainland_rel               := rlookup(const(1u,.), mainland/values);
 		attribute<.>                 per_domain              (domain) := poly2grid(Geometry , domain);
 		
-		container V := for_each_nedv(AsItemName(Label), String(ID(.))+'[..]', void, .);
+		container V := for_each_nedv(AsItemName(Label1), String(ID(.))+'[..]', void, .);
 		container GetPerCountryGeometry := 
 			for_each_ne(
-				AsItemName(Label)
-				, 'GetPerCountryGeometry_T('+quote(AsItemName(Label))+')'
+				AsItemName(Label1)
+				, 'GetPerCountryGeometry_T('+quote(AsItemName(Label1))+')'
 			);
 			
 		Template GetPerCountryGeometry_T

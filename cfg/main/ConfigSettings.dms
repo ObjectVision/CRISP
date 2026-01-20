@@ -3,5 +3,6 @@ container ConfigSettings
 	container Overridable
 	{
 		parameter<String> ToBURPDataDir         := '%SourceDataDir%/2BURP';
+		parameter<String> ToBURPArchiveDataDir         := '%SourceDataDir%/_2BURP_Archief';
 	}
 }
