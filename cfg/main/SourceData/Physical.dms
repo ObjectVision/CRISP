@@ -13,7 +13,8 @@ container Physical : using = "geography;classifications"
 		// attribute<bool>  NoData(domain)   :=!IsDefined(ReadData);//visualtion purposes of nodata (null) values
 		// attribute<int16> Elevation(domain):=MakeDefined(ReadData,0s);//0--> oceans/seas - no inland lakes! essential for rank there are values otherwise null in Urban_Cali --> moving of cururb
 	// }	
-	container UN_Countries_Territory {
+	container UN_Countries_Territory 
+	{
 		unit<wpoint> Countries_UN_definition_grid
 		: storagename = "%ToBURPDataDir%/Regions/UNBNDA_CTY_onLAND_54009_1000.tif"
 		, storagetype = "gdal.grid"
@@ -41,15 +42,15 @@ container Physical : using = "geography;classifications"
 	{
 		// /*
 		unit<ipoint> Elevation_3ss
-		:	StorageName     = "%ToBURPDataDir%/physical/Elevation/GLO_90_3ss_4326.tif"
+		:	StorageName     = "%ToBURPArchiveDataDir%/physical/Elevation/GLO_90_3ss_4326.tif"
 		,	StorageType     = "gdal.grid"
 		,	StorageReadOnly = "True"
 		,	DialogData      = "LatLong"
 		, 	LazyCalculated  = "true"
 		{
-			attribute<int32> ReadData_org(domain_sub);
-			attribute<int16> ReadData   (domain_sub) := ReadData_org[int16];
-			attribute<int32> Write_Mean_1k        (domain) := mean_int32(ReadData_org, domain_sub/domain_rel), StorageName = "='%ToBURPDataDir%/physical/Elevation/'+ModelParameters/StudyArea+'_mean_1k_'+ModelParameters/domain_EPSG+'.tif'";
+			attribute<int32> ReadData_org   (domain_sub);
+			attribute<int16> ReadData       (domain_sub) := ReadData_org[int16];
+			attribute<int32> Write_Mean_1k      (domain) := mean_int32(ReadData_org, domain_sub/domain_rel), StorageName = "='%ToBURPDataDir%/physical/Elevation/'+ModelParameters/StudyArea+'_mean_1k_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "gdalwrite.grid";
 		}
 		// */
 	
@@ -155,13 +156,13 @@ container Physical : using = "geography;classifications"
 			attribute<CurrentProjection> Geometry_        (poly) := =ModelParameters/domain_EPSG == '54009' ? 'Geometry_MW' : 'Geometry';
 			
 			attribute<m2>                Area                    := area(geometry_mer, float64)[m2];
-			attribute<bool>              Write_per_grid (domain) := IsDefined(poly2grid(Geometry_, domain)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_'+ModelParameters/domain_EPSG+'.tif'";
+			attribute<bool>              Write_per_grid (domain) := IsDefined(poly2grid(Geometry_, domain)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "tif";
 			attribute<bool>              Read_per_grid  (domain) : StorageName = "=PropValue(Write_per_grid, 'StorageName')", StorageReadOnly = "true";
 			parameter<bool> 			 check_grid_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
 			
 			parameter<bool> 			 do_store_files:= True, ExplicitSuppliers = "Write_per_grid;Write_per_subgrid;";
 			
-			attribute<bool>              Write_per_subgrid (domain_sub) := IsDefined(poly2grid(Geometry_, domain_sub)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_subdomain_'+ModelParameters/domain_EPSG+'.tif'";
+			attribute<bool>              Write_per_subgrid (domain_sub) := IsDefined(poly2grid(Geometry_, domain_sub)), StorageName = "= '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_subdomain_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "tif";
 			attribute<bool>              Read_per_subgrid  (domain_sub) : StorageName = "=PropValue(Write_per_subgrid, 'StorageName')", StorageReadOnly = "true";
 			parameter<bool> 			 check_subgrid_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/physical/Water/'+ModelParameters/StudyArea+'/IsInlandWater_subdomain_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
 		}
@@ -183,7 +184,7 @@ container Physical : using = "geography;classifications"
 			attribute<uint32>  Fraction_Water0        (domain) := sum(IsWater[uint32], domain_sub/domain_rel);
 			attribute<uint32>  Fraction_Water         (domain) := ((Fraction_Water0[float32] / ((ModelParameters/WGS_Gridsize / ModelParameters/WGS_Subgridsize)^2d)[float32]) * 100f)[uint32];
 			
-			attribute<bool>	   Write_HasLand          (domain) := Fraction_Water0 < pcount(domain_sub/domain_rel)[uint32], storagename = "= '%ToBURPDataDir%/Physical/water/'+ModelParameters/StudyArea+'/HasLand_'+ModelParameters/domain_EPSG+'.tif'";
+			attribute<bool>	   Write_HasLand          (domain) := Fraction_Water0 < pcount(domain_sub/domain_rel)[uint32], storagename = "= '%ToBURPDataDir%/Physical/water/'+ModelParameters/StudyArea+'/HasLand_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "tif";
 			attribute<bool>    Read_HasLand           (domain) : StorageName = "= PropValue(Write_HasLand, 'storagename')", StorageType = "gdal.grid", StorageReadOnly = "True";
 			
 			parameter<bool> check_file:= ='strlen('+quote(ExistingFile('', '%ToBURPDataDir%/Physical/water/'+ModelParameters/StudyArea+'/HasLand_'+ModelParameters/domain_EPSG+'.tif'))+') > 0';
@@ -199,9 +200,9 @@ container Physical : using = "geography;classifications"
 		container Location2AllInlandWater   := Templates/GetDistance_T(Inland_Water);
 		
 		attribute<float32> Location2LargeInlandWater_sqr_domain_export    (domain) := Location2LargeInlandWater/Location2_sqr_domain_export
-		, StorageName = "='%ToBURPDataDir%/physical/water/'+ModelParameters/StudyArea+'/Location2LargeInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'";
+		, StorageName = "='%ToBURPDataDir%/physical/water/'+ModelParameters/StudyArea+'/Location2LargeInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "tif";
 		attribute<float32> Location2AnyInlandWater_sqr_domain_export      (domain) := Location2AllInlandWater/Location2_sqr_domain_export
-		, StorageName = "='%ToBURPDataDir%/physical/water/'+ModelParameters/StudyArea+'/Location2AnyInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'";
+		, StorageName = "='%ToBURPDataDir%/physical/water/'+ModelParameters/StudyArea+'/Location2AnyInlandWater_m_sqr_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "tif";
 
 
 		unit<ipoint> Location2LargeInlandWater_m_sqr

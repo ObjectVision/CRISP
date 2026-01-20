@@ -64,7 +64,7 @@ container Impl
 		attribute<ProtoDomain_sub>  LB_sub := LB[ProtoDomain_sub];
 		attribute<ProtoDomain_sub>  UB_sub := UB[ProtoDomain_sub];
 	}
-	unit<uint32> StudyAreaTile_Create_Mollweide := StudyAreaTile_Select_Mollweide, StorageName = "='%projdir%/data/StudyAreaTiles_'+ModelParameters/StudyArea+'_'+/ModelParameters/domain_EPSG+'.dbf'" // decouple by renaming this file when produced
+	unit<uint32> StudyAreaTile_Create_Mollweide := StudyAreaTile_Select_Mollweide, StorageName = "='%projdir%/data/StudyAreaTiles_'+ModelParameters/StudyArea+'_'+/ModelParameters/domain_EPSG+'.dbf'", StorageType = "gdalwrite.vect"// decouple by renaming this file when produced
 	{
 		attribute<uint16>           LB_X := pointcol(LB);
 		attribute<uint16>           LB_y := pointrow(LB);
@@ -137,7 +137,7 @@ container Impl
 		attribute<ProtoDomain_sub_LatLong>  UB_sub := UB[ProtoDomain_sub_LatLong];
 	}
 
-	unit<uint32> StudyAreaTile_Create_LatLong := StudyAreaTile_Select_LatLong, StorageName = "='%projdir%/data/StudyAreaTiles_'+ModelParameters/StudyArea+'_LatLong.dbf'" // decouple by renaming this file when produced
+	unit<uint32> StudyAreaTile_Create_LatLong := StudyAreaTile_Select_LatLong, StorageName = "='%projdir%/data/StudyAreaTiles_'+ModelParameters/StudyArea+'_LatLong.dbf'", StorageType = "gdalwrite.vect" // decouple by renaming this file when produced
 	{
 		attribute<uint16>           LB_X := pointcol(LB);
 		attribute<uint16>           LB_y := pointrow(LB);
@@ -181,7 +181,7 @@ container Impl
 		parameter<string> StudyArea_name;
 		///
 		
-		unit<uint32> StudyAreaTile: StorageName = "='%projdir%/data/StudyAreaTiles_'+StudyArea_name+'_'+/ModelParameters/domain_EPSG+'.dbf'", StorageReadOnly = "true"
+		unit<uint32> StudyAreaTile: StorageName = "='%projdir%/data/StudyAreaTiles_'+StudyArea_name+'_'+/ModelParameters/domain_EPSG+'.dbf'", StorageType = "gdalwrite.vect", StorageReadOnly = "true"
 		{
 			attribute<int32>            LB_X;
 			attribute<int32>            LB_y;

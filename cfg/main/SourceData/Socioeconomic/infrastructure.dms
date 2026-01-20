@@ -40,9 +40,9 @@ container Infrastructure : using = "Geography"
 	container Location2Roads45    := Templates/GetDistance_T(GRIP4/Roads45);
 	
 	attribute<float32> Location2Roads123_sqr_domain_export    (domain) := Location2Roads123/Location2_sqr_domain_export
-	, StorageName = "='%ToBURPDataDir%/Socioeconomic/Infrastructure/'+ModelParameters/StudyArea+'/Location2Road123_m_sqr_'+ModelParameters/domain_EPSG+'.tif'";
+	, StorageName = "='%ToBURPDataDir%/Socioeconomic/Infrastructure/'+ModelParameters/StudyArea+'/Location2Road123_m_sqr_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "tif";
 	attribute<float32> Location2Roads45_sqr_domain_export    (domain) := Location2Roads45/Location2_sqr_domain_export
-	, StorageName = "='%ToBURPDataDir%/Socioeconomic/Infrastructure/'+ModelParameters/StudyArea+'/Location2Road45_m_sqr_'+ModelParameters/domain_EPSG+'.tif'";
+	, StorageName = "='%ToBURPDataDir%/Socioeconomic/Infrastructure/'+ModelParameters/StudyArea+'/Location2Road45_m_sqr_'+ModelParameters/domain_EPSG+'.tif'", StorageType = "tif";
 
 	unit<ipoint> Location2Roads123_m_sqr
 	:	StorageName     = "='%ToBURPDataDir%/Socioeconomic/Infrastructure/World/Location2Road123_m_sqr_'+ModelParameters/domain_EPSG+'.tif'"
